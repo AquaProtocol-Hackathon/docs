@@ -1,80 +1,205 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Get started with verification and notarization in minutes"
+icon: "rocket"
 ---
 
-## Get started in three steps
+## Implement Verification
 
-Get your documentation site running locally and make your first customization.
+Get up and running with Aqua Protocol's verification system in three simple steps. This guide will walk you through setting up your environment, creating your first verification, and integrating with our API.
 
-### Step 1: Set up your local environment
+<Info>
+This quickstart assumes you have basic knowledge of blockchain concepts and JavaScript/TypeScript. If you're new to verification systems, check out our [Core Concepts](/essentials/settings) guide first.
+</Info>
+
+### Step 1: Set Up Your Environment
 
 <AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+  <Accordion icon="download" title="Install the SDK">
+    Install the Aqua Protocol SDK for verification and notarization:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
+    <CodeGroup>
+    ```bash npm
+    npm install @aqua-protocol/verifier
+    ```
+    
+    ```bash yarn
+    yarn add @aqua-protocol/verifier
+    ```
+    
+    ```bash pnpm
+    pnpm add @aqua-protocol/verifier
+    ```
+    </CodeGroup>
+    
+    <Check>
+    The SDK includes TypeScript definitions and comprehensive verification tools.
+    </Check>
   </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+  
+  <Accordion icon="key" title="Get your API credentials">
+    1. Sign up for a free account at [app.aqua-protocol.org](https://app.aqua-protocol.org)
+    2. Navigate to the API Keys section in your dashboard
+    3. Generate a new API key for verification services
+    4. Copy your API key and verification endpoint
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
+    <Warning>
+    Keep your API key secure and never commit it to version control. Use environment variables in production.
+    </Warning>
   </Accordion>
 </AccordionGroup>
 
-### Step 2: Deploy your changes
+### Step 2: Create Your First Verification
 
 <AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+  <Accordion icon="file-check" title="Define verification schema">
+    Create a verification schema for document notarization:
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
+    ```json schema.json
+    {
+      "type": "object",
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "description": "Unique document identifier"
+        },
+        "hash": {
+          "type": "string",
+          "description": "SHA-256 hash of document content"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "signer": {
+          "type": "string",
+          "description": "Public key of document signer"
+        }
+      },
+      "required": ["documentId", "hash", "timestamp", "signer"]
+    }
+    ```
+    
+    <Tip>
+    This schema defines the structure for document verification and notarization.
+    </Tip>
+  </Accordion>
+  
+  <Accordion icon="rocket" title="Implement verification">
+    Create and verify a document using the Aqua Protocol SDK:
+    
+    ```javascript verify.js
+    import { AquaVerifier } from '@aqua-protocol/verifier';
+    import crypto from 'crypto';
+    
+    const verifier = new AquaVerifier({
+      apiKey: process.env.AQUA_API_KEY,
+      endpoint: 'https://api.aqua-protocol.org/v3'
+    });
+    
+    // Create document hash
+    const documentContent = 'Important document content';
+    const documentHash = crypto.createHash('sha256')
+      .update(documentContent)
+      .digest('hex');
+    
+    // Create verification
+    const verification = await verifier.createVerification({
+      documentId: 'doc-123',
+      hash: documentHash,
+      timestamp: new Date().toISOString(),
+      signer: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6'
+    });
+    
+    console.log('Verification created:', verification.id);
+    console.log('Transaction hash:', verification.txHash);
+    ```
+    
+    <Check>
+    Your document is now verified and notarized on the blockchain!
+    </Check>
   </Accordion>
 </AccordionGroup>
 
-### Step 3: Go live
+### Step 3: Query Verification Status
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+<AccordionGroup>
+  <Accordion icon="search" title="Check verification status">
+    Query your verification to confirm its status and details:
+    
+    ```javascript query.js
+    // Get verification details
+    const verification = await verifier.getVerification(verification.id);
+    
+    console.log('Verification Status:', verification.status);
+    console.log('Document ID:', verification.documentId);
+    console.log('Created At:', verification.createdAt);
+    console.log('Block Number:', verification.blockNumber);
+    ```
+  </Accordion>
+  
+  <Accordion icon="check-circle" title="Verify document integrity">
+    Verify that a document matches its notarized hash:
+    
+    ```javascript validate.js
+    // Verify document against notarized hash
+    const isValid = await verifier.validateDocument({
+      documentId: 'doc-123',
+      content: documentContent,
+      expectedHash: verification.hash
+    });
+    
+    if (isValid) {
+      console.log('Document integrity verified');
+    } else {
+      console.log('Document has been modified');
+    }
+    ```
+    
+    <Warning>
+    Always verify document integrity before trusting verification results in production applications.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
 
-## Next steps
+## Next Steps
 
-Now that you have your docs running, explore these key features:
+Congratulations! You've successfully implemented verification and notarization with Aqua Protocol. Here's what you can explore next:
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Schema Reference" icon="file-code" href="/essentials/settings">
+    Explore comprehensive schema definitions for advanced verification patterns.
+  </Card>
+  
+  <Card title="Verifier Tests" icon="check-circle" href="/essentials/navigation">
+    Learn about automated testing and validation frameworks.
+  </Card>
+  
+  <Card title="Security & Identity" icon="shield-check" href="/essentials/code">
+    Implement advanced identity management and security features.
+  </Card>
+  
+  <Card title="Use Cases" icon="lightbulb" href="/essentials/images">
+    Discover real-world applications and implementation patterns.
+  </Card>
 </CardGroup>
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+## What's Next?
+
+<Steps>
+<Step title="Explore Advanced Features">
+  Check out our [Schema Reference](/api-reference/introduction) for detailed verification schemas and API specifications.
+</Step>
+
+<Step title="Join the Community">
+  Connect with other developers in our [Discord community](https://discord.gg/aqua-protocol) for support and collaboration.
+</Step>
+
+<Step title="Build Secure Applications">
+  Use Aqua Protocol to build secure, verifiable applications. We can't wait to see what you create!
+</Step>
+</Steps>
+
+<Tip>
+**Ready for production?** Upgrade to our Pro plan for higher rate limits, priority support, and advanced verification features. [Learn more](https://app.aqua-protocol.org/pricing).
+</Tip>

@@ -1,0 +1,633 @@
+---
+title: "Examples"
+description: "Practical examples and code samples for Aqua Protocol implementation"
+icon: "code-branch"
+---
+
+# Examples
+
+This section provides practical examples and code samples to help you implement Aqua Protocol in your applications.
+
+## Quick Start Examples
+
+### Basic Notarization
+```javascript
+import { AquaClient } from '@aqua-protocol/sdk';
+
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: 'https://api.aqua-protocol.org/v3'
+});
+
+// Notarize a simple document
+const document = 'This is an important contract that needs to be notarized.';
+const notarization = await client.notarize({
+  content: document,
+  metadata: {
+    title: 'Contract Agreement',
+    type: 'legal_document',
+    author: 'John Doe'
+  }
+});
+
+console.log('Document notarized:', notarization.verificationHash);
+```
+
+### Basic Verification
+```javascript
+// Verify the notarized document
+const verification = await client.verify({
+  verificationHash: notarization.verificationHash,
+  content: document
+});
+
+if (verification.isValid) {
+  console.log('Document is authentic and unmodified');
+  console.log('Notarized on:', verification.timestamp);
+} else {
+  console.log('Document verification failed');
+}
+```
+
+## Document Management Examples
+
+### File Upload and Notarization
+```javascript
+const multer = require('multer');
+const fs = require('fs');
+
+// Configure multer for file uploads
+const upload = multer({ dest: 'uploads/' });
+
+app.post('/upload', upload.single('document'), async (req, res) => {
+  try {
+    const filePath = req.file.path;
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+    
+    // Notarize the uploaded file
+    const notarization = await client.notarize({
+      content: fileContent,
+      metadata: {
+        name: req.file.originalname,
+        type: req.file.mimetype,
+        size: req.file.size,
+        uploadedBy: req.user.identityHash
+      }
+    });
+    
+    // Clean up temporary file
+    fs.unlinkSync(filePath);
+    
+    res.json({
+      success: true,
+      verificationHash: notarization.verificationHash,
+      message: 'File notarized successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+```
+
+### Document Verification API
+```javascript
+app.get('/verify/:hash', async (req, res) => {
+  try {
+    const { hash } = req.params;
+    const { content } = req.query;
+    
+    const verification = await client.verify({
+      verificationHash: hash,
+      content: content
+    });
+    
+    res.json({
+      isValid: verification.isValid,
+      timestamp: verification.timestamp,
+      blockNumber: verification.blockNumber,
+      network: verification.network
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+```
+
+## Identity Management Examples
+
+### User Registration with Identity
+```javascript
+app.post('/register', async (req, res) => {
+  try {
+    const { name, email, walletAddress, publicKey } = req.body;
+    
+    // Create Aqua Protocol identity
+    const identity = await client.createIdentity({
+      name,
+      email,
+      walletAddress,
+      publicKey,
+      metadata: {
+        registrationDate: new Date().toISOString(),
+        source: 'web_application'
+      }
+    });
+    
+    // Store user in database
+    const user = await db.users.create({
+      name,
+      email,
+      walletAddress,
+      identityHash: identity.verificationHash,
+      publicKey
+    });
+    
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        identityHash: identity.verificationHash
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+```
+
+### Identity Verification Middleware
+```javascript
+const verifyIdentity = async (req, res, next) => {
+  try {
+    const { identityHash, signature } = req.headers;
+    
+    if (!identityHash || !signature) {
+      return res.status(401).json({
+        error: 'Identity verification required'
+      });
+    }
+    
+    // Verify identity signature
+    const verification = await client.verifySignature({
+      verificationHash: identityHash,
+      signature: signature,
+      publicKey: req.user.publicKey
+    });
+    
+    if (!verification.isValid) {
+      return res.status(401).json({
+        error: 'Invalid identity signature'
+      });
+    }
+    
+    req.verifiedIdentity = verification;
+    next();
+  } catch (error) {
+    res.status(500).json({
+      error: 'Identity verification failed'
+    });
+  }
+};
+
+// Use middleware
+app.use('/api/protected', verifyIdentity);
+```
+
+## Access Control Examples
+
+### Role-based Access Control
+```javascript
+// Define roles and permissions
+const roles = {
+  admin: ['read', 'write', 'delete', 'manage'],
+  editor: ['read', 'write'],
+  viewer: ['read']
+};
+
+// Create access policy
+const createAccessPolicy = async (resource, role, permissions) => {
+  return await client.createAccessPolicy({
+    resource: resource,
+    rules: [
+      {
+        role: role,
+        permissions: permissions,
+        conditions: {
+          validFrom: new Date().toISOString(),
+          validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+        }
+      }
+    ]
+  });
+};
+
+// Check access
+const checkAccess = async (user, resource, action) => {
+  const accessDecision = await client.checkAccess({
+    subject: user.identityHash,
+    resource: resource,
+    action: action
+  });
+  
+  return accessDecision.granted;
+};
+```
+
+### API Endpoint Protection
+```javascript
+// Protect API endpoints
+app.get('/api/documents/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = req.user;
+    
+    // Check if user has read access to this document
+    const hasAccess = await checkAccess(
+      user,
+      `document:${id}`,
+      'read'
+    );
+    
+    if (!hasAccess) {
+      return res.status(403).json({
+        error: 'Access denied'
+      });
+    }
+    
+    // Retrieve and return document
+    const document = await db.documents.findById(id);
+    res.json(document);
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+```
+
+## Supply Chain Examples
+
+### Product Tracking
+```javascript
+// Track product through supply chain
+const trackProduct = async (productId, location, status) => {
+  const trackingData = {
+    productId,
+    location,
+    status,
+    timestamp: new Date().toISOString(),
+    handler: req.user.identityHash
+  };
+  
+  // Notarize tracking data
+  const notarization = await client.notarize({
+    content: JSON.stringify(trackingData),
+    metadata: {
+      type: 'supply_chain_tracking',
+      productId: productId,
+      location: location
+    }
+  });
+  
+  // Store in database
+  await db.tracking.create({
+    productId,
+    location,
+    status,
+    verificationHash: notarization.verificationHash,
+    timestamp: new Date()
+  });
+  
+  return notarization.verificationHash;
+};
+```
+
+### Supply Chain Verification
+```javascript
+// Verify product authenticity
+const verifyProduct = async (productId) => {
+  // Get all tracking records for product
+  const trackingRecords = await db.tracking.findByProductId(productId);
+  
+  const verificationResults = [];
+  
+  for (const record of trackingRecords) {
+    const verification = await client.verify({
+      verificationHash: record.verificationHash,
+      content: JSON.stringify({
+        productId: record.productId,
+        location: record.location,
+        status: record.status,
+        timestamp: record.timestamp,
+        handler: record.handler
+      })
+    });
+    
+    verificationResults.push({
+      record,
+      verification
+    });
+  }
+  
+  return verificationResults;
+};
+```
+
+## Healthcare Examples
+
+### Patient Record Management
+```javascript
+// Create patient record
+const createPatientRecord = async (patientData) => {
+  const record = {
+    patientId: patientData.patientId,
+    name: patientData.name,
+    dateOfBirth: patientData.dateOfBirth,
+    medicalHistory: patientData.medicalHistory,
+    createdBy: req.user.identityHash,
+    timestamp: new Date().toISOString()
+  };
+  
+  // Notarize patient record
+  const notarization = await client.notarize({
+    content: JSON.stringify(record),
+    metadata: {
+      type: 'patient_record',
+      patientId: patientData.patientId,
+      confidentiality: 'high'
+    },
+    options: {
+      hashingMethod: 'tree' // Enable selective disclosure
+    }
+  });
+  
+  return notarization.verificationHash;
+};
+```
+
+### Medical Record Access Control
+```javascript
+// Check medical record access
+const checkMedicalRecordAccess = async (patientId, requesterId, purpose) => {
+  const accessDecision = await client.checkAccess({
+    subject: requesterId,
+    resource: `medical_record:${patientId}`,
+    action: 'read',
+    context: {
+      purpose: purpose,
+      timestamp: new Date().toISOString(),
+      requesterRole: req.user.role
+    }
+  });
+  
+  return accessDecision.granted;
+};
+```
+
+## Financial Services Examples
+
+### Transaction Notarization
+```javascript
+// Notarize financial transaction
+const notarizeTransaction = async (transactionData) => {
+  const transaction = {
+    transactionId: transactionData.transactionId,
+    from: transactionData.from,
+    to: transactionData.to,
+    amount: transactionData.amount,
+    currency: transactionData.currency,
+    timestamp: new Date().toISOString(),
+    initiatedBy: req.user.identityHash
+  };
+  
+  const notarization = await client.notarize({
+    content: JSON.stringify(transaction),
+    metadata: {
+      type: 'financial_transaction',
+      transactionId: transactionData.transactionId,
+      amount: transactionData.amount,
+      currency: transactionData.currency
+    }
+  });
+  
+  return notarization.verificationHash;
+};
+```
+
+### Compliance Reporting
+```javascript
+// Generate compliance report
+const generateComplianceReport = async (startDate, endDate) => {
+  const transactions = await db.transactions.findByDateRange(startDate, endDate);
+  
+  const report = {
+    period: { startDate, endDate },
+    totalTransactions: transactions.length,
+    totalAmount: transactions.reduce((sum, t) => sum + t.amount, 0),
+    transactions: []
+  };
+  
+  for (const transaction of transactions) {
+    const verification = await client.verify({
+      verificationHash: transaction.verificationHash,
+      content: JSON.stringify(transaction)
+    });
+    
+    report.transactions.push({
+      transaction,
+      verification: verification.isValid
+    });
+  }
+  
+  return report;
+};
+```
+
+## IoT Examples
+
+### Device Data Notarization
+```javascript
+// Notarize IoT device data
+const notarizeDeviceData = async (deviceId, sensorData) => {
+  const data = {
+    deviceId,
+    sensorData,
+    timestamp: new Date().toISOString(),
+    location: sensorData.location,
+    temperature: sensorData.temperature,
+    humidity: sensorData.humidity
+  };
+  
+  const notarization = await client.notarize({
+    content: JSON.stringify(data),
+    metadata: {
+      type: 'iot_sensor_data',
+      deviceId: deviceId,
+      sensorType: 'environmental'
+    }
+  });
+  
+  return notarization.verificationHash;
+};
+```
+
+### Device Access Control
+```javascript
+// Control device access
+const checkDeviceAccess = async (deviceId, requesterId, action) => {
+  const accessDecision = await client.checkAccess({
+    subject: requesterId,
+    resource: `device:${deviceId}`,
+    action: action,
+    context: {
+      timestamp: new Date().toISOString(),
+      deviceType: 'iot_sensor'
+    }
+  });
+  
+  return accessDecision.granted;
+};
+```
+
+## Error Handling Examples
+
+### Comprehensive Error Handling
+```javascript
+const handleAquaError = (error) => {
+  switch (error.code) {
+    case 'INVALID_API_KEY':
+      return {
+        status: 401,
+        message: 'Invalid API key. Please check your configuration.'
+      };
+    case 'NETWORK_ERROR':
+      return {
+        status: 503,
+        message: 'Network error. Please try again later.'
+      };
+    case 'VALIDATION_ERROR':
+      return {
+        status: 400,
+        message: `Validation error: ${error.details}`
+      };
+    case 'RATE_LIMIT_EXCEEDED':
+      return {
+        status: 429,
+        message: 'Rate limit exceeded. Please try again later.'
+      };
+    case 'INSUFFICIENT_PERMISSIONS':
+      return {
+        status: 403,
+        message: 'Insufficient permissions for this operation.'
+      };
+    default:
+      return {
+        status: 500,
+        message: 'An unexpected error occurred.'
+      };
+  }
+};
+
+// Use in API endpoints
+app.post('/api/notarize', async (req, res) => {
+  try {
+    const result = await client.notarize(req.body);
+    res.json(result);
+  } catch (error) {
+    const errorResponse = handleAquaError(error);
+    res.status(errorResponse.status).json({
+      error: errorResponse.message
+    });
+  }
+});
+```
+
+## Testing Examples
+
+### Unit Tests
+```javascript
+const { AquaClient } = require('@aqua-protocol/sdk');
+
+describe('Aqua Protocol Integration', () => {
+  let client;
+  
+  beforeEach(() => {
+    client = new AquaClient({
+      apiKey: 'test-key',
+      endpoint: 'https://api.test.aqua-protocol.org/v3'
+    });
+  });
+  
+  test('should notarize content', async () => {
+    const content = 'Test content';
+    const result = await client.notarize({ content });
+    
+    expect(result.verificationHash).toBeDefined();
+    expect(result.isValid).toBe(true);
+  });
+  
+  test('should verify content', async () => {
+    const content = 'Test content';
+    const notarization = await client.notarize({ content });
+    const verification = await client.verify({
+      verificationHash: notarization.verificationHash,
+      content
+    });
+    
+    expect(verification.isValid).toBe(true);
+  });
+});
+```
+
+### Integration Tests
+```javascript
+describe('Document Management API', () => {
+  test('should upload and notarize document', async () => {
+    const response = await request(app)
+      .post('/upload')
+      .attach('document', 'test-document.pdf')
+      .expect(200);
+    
+    expect(response.body.success).toBe(true);
+    expect(response.body.verificationHash).toBeDefined();
+  });
+  
+  test('should verify document', async () => {
+    const verificationHash = '0x1234567890abcdef...';
+    const response = await request(app)
+      .get(`/verify/${verificationHash}`)
+      .query({ content: 'test content' })
+      .expect(200);
+    
+    expect(response.body.isValid).toBe(true);
+  });
+});
+```
+
+## Best Practices
+
+### Code Organization
+- **Separate concerns** - Keep Aqua Protocol logic separate from business logic
+- **Use middleware** - Implement reusable access control middleware
+- **Error handling** - Implement comprehensive error handling
+- **Logging** - Add detailed logging for debugging and monitoring
+
+### Performance
+- **Batch operations** - Use batch APIs for multiple operations
+- **Caching** - Cache frequently accessed data
+- **Async operations** - Use async/await for better performance
+- **Connection pooling** - Reuse connections when possible
+
+### Security
+- **Input validation** - Validate all inputs before processing
+- **API key protection** - Never expose API keys in client-side code
+- **Access control** - Implement proper access control for all endpoints
+- **Audit logging** - Log all important operations for auditing

@@ -1,0 +1,532 @@
+---
+title: "Access Control"
+description: "Comprehensive guide to Aqua Protocol's decentralized access control system"
+icon: "shield-halved"
+---
+
+# Access Control
+
+Aqua Protocol provides a sophisticated decentralized access control system that enables fine-grained, policy-based access management without relying on centralized authorities.
+
+## Overview
+
+Aqua Protocol's access control system allows you to:
+
+- **Define access policies** based on identity and credentials
+- **Enforce permissions** across distributed systems
+- **Manage resource access** through cryptographic proofs
+- **Implement time-based** and condition-based access
+- **Audit access decisions** and maintain compliance
+
+## Core Concepts
+
+### Access Control Policies
+Access control policies define who can access what resources under what conditions:
+
+```json
+{
+  "policyId": "0xpolicy123...",
+  "resource": "0xresource456...",
+  "rules": [
+    {
+      "subject": "0xuser789...",
+      "permissions": ["read", "write"],
+      "conditions": {
+        "validFrom": "2024-01-01T00:00:00Z",
+        "validUntil": "2024-12-31T23:59:59Z",
+        "requiredCredentials": ["professional_certification"],
+        "minimumLevel": "senior"
+      }
+    }
+  ],
+  "verificationHash": "0xverification123..."
+}
+```
+
+### Access Control Components
+
+#### Subjects
+Entities that can request access:
+- **Individual identities** (users, devices)
+- **Group identities** (organizations, teams)
+- **Service identities** (applications, APIs)
+- **Anonymous identities** (temporary access)
+
+#### Resources
+Entities that can be accessed:
+- **Data resources** (files, databases, APIs)
+- **Service resources** (applications, microservices)
+- **Physical resources** (buildings, equipment)
+- **Digital resources** (content, media, software)
+
+#### Permissions
+Actions that can be performed:
+- **Read** - View or retrieve data
+- **Write** - Create or modify data
+- **Execute** - Run code or processes
+- **Admin** - Manage access policies
+- **Custom** - Application-specific permissions
+
+## Creating Access Policies
+
+### Basic Access Policy
+```javascript
+import { AquaClient } from '@aqua-protocol/sdk';
+
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: 'https://api.aqua-protocol.org/v3'
+});
+
+// Create a basic access policy
+const policy = await client.createAccessPolicy({
+  resource: '0xresource123...',
+  rules: [
+    {
+      subject: '0xuser123...',
+      permissions: ['read', 'write'],
+      conditions: {
+        validFrom: '2024-01-01T00:00:00Z',
+        validUntil: '2024-12-31T23:59:59Z'
+      }
+    }
+  ]
+});
+
+console.log('Access policy created:', policy.verificationHash);
+```
+
+### Role-based Access Control
+```javascript
+// Create role-based access policy
+const rolePolicy = await client.createAccessPolicy({
+  resource: '0xresource123...',
+  rules: [
+    {
+      role: 'admin',
+      permissions: ['read', 'write', 'execute', 'admin'],
+      conditions: {
+        requiredCredentials: ['admin_certification'],
+        minimumLevel: 'senior'
+      }
+    },
+    {
+      role: 'user',
+      permissions: ['read'],
+      conditions: {
+        requiredCredentials: ['basic_verification'],
+        validFrom: '2024-01-01T00:00:00Z'
+      }
+    }
+  ]
+});
+```
+
+### Attribute-based Access Control
+```javascript
+// Create attribute-based access policy
+const attributePolicy = await client.createAccessPolicy({
+  resource: '0xresource123...',
+  rules: [
+    {
+      subject: '0xuser123...',
+      permissions: ['read', 'write'],
+      conditions: {
+        attributes: {
+          department: 'engineering',
+          clearanceLevel: 'confidential',
+          location: 'US'
+        },
+        requiredCredentials: [
+          'security_clearance',
+          'employment_verification'
+        ]
+      }
+    }
+  ]
+});
+```
+
+## Access Control Rules
+
+### Time-based Rules
+```javascript
+// Time-based access control
+const timePolicy = await client.createAccessPolicy({
+  resource: '0xresource123...',
+  rules: [
+    {
+      subject: '0xuser123...',
+      permissions: ['read'],
+      conditions: {
+        validFrom: '2024-01-01T00:00:00Z',
+        validUntil: '2024-12-31T23:59:59Z',
+        timeRestrictions: {
+          days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
+          hours: {
+            start: '09:00',
+            end: '17:00'
+          },
+          timezone: 'UTC'
+        }
+      }
+    }
+  ]
+});
+```
+
+### Location-based Rules
+```javascript
+// Location-based access control
+const locationPolicy = await client.createAccessPolicy({
+  resource: '0xresource123...',
+  rules: [
+    {
+      subject: '0xuser123...',
+      permissions: ['read', 'write'],
+      conditions: {
+        location: {
+          allowedCountries: ['US', 'CA', 'UK'],
+          allowedRegions: ['North America', 'Europe'],
+          blockedIPs: ['192.168.1.0/24'],
+          requireVPN: true
+        }
+      }
+    }
+  ]
+});
+```
+
+### Credential-based Rules
+```javascript
+// Credential-based access control
+const credentialPolicy = await client.createAccessPolicy({
+  resource: '0xresource123...',
+  rules: [
+    {
+      subject: '0xuser123...',
+      permissions: ['read', 'write'],
+      conditions: {
+        requiredCredentials: [
+          {
+            type: 'professional_certification',
+            organization: 'Software Engineering Institute',
+            minimumLevel: 'senior',
+            valid: true
+          },
+          {
+            type: 'security_clearance',
+            level: 'confidential',
+            valid: true
+          }
+        ]
+      }
+    }
+  ]
+});
+```
+
+## Access Control Enforcement
+
+### Access Decision Engine
+```javascript
+// Check access for a specific request
+const accessDecision = await client.checkAccess({
+  subject: '0xuser123...',
+  resource: '0xresource123...',
+  action: 'read',
+  context: {
+    timestamp: new Date().toISOString(),
+    location: 'US',
+    ipAddress: '192.168.1.100',
+    userAgent: 'Mozilla/5.0...'
+  }
+});
+
+console.log('Access granted:', accessDecision.granted);
+console.log('Reason:', accessDecision.reason);
+console.log('Conditions met:', accessDecision.conditionsMet);
+```
+
+### Batch Access Checking
+```javascript
+// Check access for multiple requests
+const batchAccess = await client.checkBatchAccess([
+  {
+    subject: '0xuser123...',
+    resource: '0xresource123...',
+    action: 'read'
+  },
+  {
+    subject: '0xuser456...',
+    resource: '0xresource789...',
+    action: 'write'
+  }
+]);
+
+console.log('Batch access results:', batchAccess);
+```
+
+### Real-time Access Monitoring
+```javascript
+// Monitor access in real-time
+client.on('access:granted', (event) => {
+  console.log('Access granted:', event.subject, 'to', event.resource);
+});
+
+client.on('access:denied', (event) => {
+  console.log('Access denied:', event.subject, 'to', event.resource, event.reason);
+});
+
+client.on('access:violation', (event) => {
+  console.log('Access violation detected:', event);
+  // Trigger security alert
+});
+```
+
+## Advanced Access Control
+
+### Hierarchical Access Control
+```javascript
+// Create hierarchical access policy
+const hierarchicalPolicy = await client.createAccessPolicy({
+  resource: '0xresource123...',
+  rules: [
+    {
+      subject: '0xorganization123...',
+      permissions: ['read', 'write', 'execute'],
+      conditions: {
+        requiredCredentials: ['organization_verification'],
+        subOrganizations: true
+      }
+    },
+    {
+      subject: '0xdepartment456...',
+      permissions: ['read', 'write'],
+      conditions: {
+        parentOrganization: '0xorganization123...',
+        requiredCredentials: ['department_verification']
+      }
+    }
+  ]
+});
+```
+
+### Delegation and Inheritance
+```javascript
+// Create delegation policy
+const delegationPolicy = await client.createAccessPolicy({
+  resource: '0xresource123...',
+  rules: [
+    {
+      subject: '0xuser123...',
+      permissions: ['read', 'write'],
+      conditions: {
+        canDelegate: true,
+        maxDelegationDepth: 2,
+        delegationExpiry: '2024-12-31T23:59:59Z'
+      }
+    }
+  ]
+});
+
+// Delegate access to another user
+const delegation = await client.delegateAccess({
+  delegator: '0xuser123...',
+  delegatee: '0xuser456...',
+  resource: '0xresource123...',
+  permissions: ['read'],
+  expiry: '2024-06-30T23:59:59Z'
+});
+```
+
+### Dynamic Access Control
+```javascript
+// Create dynamic access policy
+const dynamicPolicy = await client.createAccessPolicy({
+  resource: '0xresource123...',
+  rules: [
+    {
+      subject: '0xuser123...',
+      permissions: ['read', 'write'],
+      conditions: {
+        dynamicConditions: {
+          riskScore: {
+            max: 0.3,
+            source: 'risk_assessment_service'
+          },
+          behaviorScore: {
+            min: 0.8,
+            source: 'behavior_analysis_service'
+          },
+          complianceStatus: {
+            required: true,
+            source: 'compliance_service'
+          }
+        }
+      }
+    }
+  ]
+});
+```
+
+## Access Control Auditing
+
+### Access Logs
+```javascript
+// Retrieve access logs
+const accessLogs = await client.getAccessLogs({
+  resource: '0xresource123...',
+  startDate: '2024-01-01T00:00:00Z',
+  endDate: '2024-01-31T23:59:59Z',
+  subject: '0xuser123...',
+  action: 'read'
+});
+
+console.log('Access logs:', accessLogs);
+```
+
+### Compliance Reporting
+```javascript
+// Generate compliance report
+const complianceReport = await client.generateComplianceReport({
+  resource: '0xresource123...',
+  startDate: '2024-01-01T00:00:00Z',
+  endDate: '2024-01-31T23:59:59Z',
+  includeViolations: true,
+  includeRecommendations: true
+});
+
+console.log('Compliance report:', complianceReport);
+```
+
+### Access Analytics
+```javascript
+// Get access analytics
+const analytics = await client.getAccessAnalytics({
+  resource: '0xresource123...',
+  timeRange: '30d',
+  metrics: [
+    'access_count',
+    'unique_users',
+    'permission_usage',
+    'violation_rate'
+  ]
+});
+
+console.log('Access analytics:', analytics);
+```
+
+## Integration Examples
+
+### API Gateway Integration
+```javascript
+// Express.js middleware for access control
+const accessControlMiddleware = async (req, res, next) => {
+  try {
+    const accessDecision = await client.checkAccess({
+      subject: req.user.identityHash,
+      resource: req.path,
+      action: req.method.toLowerCase(),
+      context: {
+        timestamp: new Date().toISOString(),
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      }
+    });
+
+    if (accessDecision.granted) {
+      req.accessContext = accessDecision;
+      next();
+    } else {
+      res.status(403).json({
+        error: 'Access denied',
+        reason: accessDecision.reason
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      error: 'Access control error',
+      message: error.message
+    });
+  }
+};
+
+// Use middleware
+app.use('/api', accessControlMiddleware);
+```
+
+### Database Integration
+```javascript
+// Database access control
+const checkDatabaseAccess = async (userId, tableName, operation) => {
+  const accessDecision = await client.checkAccess({
+    subject: userId,
+    resource: `database:${tableName}`,
+    action: operation,
+    context: {
+      timestamp: new Date().toISOString(),
+      database: 'production'
+    }
+  });
+
+  return accessDecision.granted;
+};
+
+// Use in database operations
+const getUserData = async (userId, requestingUserId) => {
+  const hasAccess = await checkDatabaseAccess(requestingUserId, 'users', 'read');
+  
+  if (!hasAccess) {
+    throw new Error('Access denied');
+  }
+  
+  return await db.users.findById(userId);
+};
+```
+
+## Best Practices
+
+### Security
+- **Principle of least privilege** - Grant minimum necessary permissions
+- **Regular access reviews** - Audit and update access policies
+- **Multi-factor authentication** - Require additional verification
+- **Encryption** - Protect sensitive access control data
+
+### Performance
+- **Cache access decisions** - Reduce API calls for repeated requests
+- **Batch operations** - Process multiple access checks together
+- **Optimize policies** - Use efficient rule evaluation
+- **Monitor performance** - Track access control overhead
+
+### Compliance
+- **Audit trails** - Maintain comprehensive access logs
+- **Data retention** - Implement appropriate retention policies
+- **Privacy protection** - Minimize data collection and storage
+- **Regulatory compliance** - Meet industry and legal requirements
+
+## Use Cases
+
+### Enterprise Applications
+- **Employee access** to internal systems
+- **Customer access** to services and data
+- **Partner access** to shared resources
+- **API access** control and rate limiting
+
+### Healthcare
+- **Patient data** access control
+- **Medical records** privacy protection
+- **Provider access** to patient information
+- **Compliance** with HIPAA and other regulations
+
+### Financial Services
+- **Account access** control
+- **Transaction permissions** and limits
+- **Regulatory compliance** and reporting
+- **Fraud prevention** and detection
+
+### IoT and Smart Devices
+- **Device access** control
+- **Data sharing** permissions
+- **Network access** management
+- **Security policy** enforcement

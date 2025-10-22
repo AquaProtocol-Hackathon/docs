@@ -1,16 +1,16 @@
-# Mintlify Starter Kit
+# Aqua Protocol Documentation
 
-Use the starter kit to get your docs deployed and ready to customize.
+Secure blockchain verification and notarization platform documentation.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+This documentation site provides comprehensive guides and API references for Aqua Protocol, featuring
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+- Verification workflows
+- Schema references
+- Developer tools
+- Security & identity management
+- Use cases and examples
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+**[Get started with Aqua Protocol](/quickstart)**
 
 ## Development
 

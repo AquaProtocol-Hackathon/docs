@@ -1,0 +1,234 @@
+---
+title: "Verifier Tests"
+description: "Required tests for Aqua Protocol implementations to ensure compliance"
+icon: "check-circle"
+---
+
+# Verifier Tests
+
+## Overview
+
+The Aqua verifier **MUST** validate revisions per the schema defined at [https://aqua-protocol.org/docs/v3/schema_2](https://aqua-protocol.org/docs/v3/schema_2). This document specifies required tests for implementations to ensure compliance with the Aqua protocol, as introduced at [/docs/v3/intro](/intro). Tests are divided into **Revision Verification** and **Relational Verification** domains. Implementations **MUST** pass all tests to be considered conformant.
+
+<Warning>
+Implementations MUST pass all tests to be considered conformant with the Aqua Protocol.
+</Warning>
+
+## Prerequisites
+
+### Schema Compliance
+Implementations **MUST** conform to [https://aqua-protocol.org/docs/v3/schema_2](https://aqua-protocol.org/docs/v3/schema_2).
+
+### Tools
+Implementations **MAY** use any framework supporting:
+- **SHA256 hashing**
+- **Ethereum EIP-191** (using the secp256k1 curve) signature validation
+
+<Info>
+Implementations MAY support additional hashing algorithms (e.g., SHA3-512) or signature schemes (e.g., secp256r1) only if specified in an updated schema and supported by new, defined signature_type or witness_network values.
+</Info>
+
+## Revision Verification Tests
+
+These tests ensure each revision object in revisions is independently valid. Types **MUST** adhere to the schema at [https://aqua-protocol.org/docs/v3/schema_2](https://aqua-protocol.org/docs/v3/schema_2).
+
+### RV-01: Version Compliance
+
+The `version` field **MUST** be one of the following exact strings:
+
+- `"https://aqua-protocol.org/docs/schema/v1.3.2 | SHA256 | Method: scalar"`
+- `"https://aqua-protocol.org/docs/schema/v1.3.2 | SHA256 | Method: tree"`
+
+<Warning>
+Implementations MUST reject any other value.
+</Warning>
+
+### RV-02: Required Fields
+
+Every revision **MUST** include:
+- `previous_verification_hash`
+- `local_timestamp`
+- `revision_type`
+- `version`
+
+<Warning>
+Implementations MUST reject revisions missing these fields or containing empty strings for local_timestamp, revision_type, or version.
+</Warning>
+
+**Timestamp Requirements:**
+- `local_timestamp` **MUST** be in `YYYYMMDDHHMMSS` format
+- **MUST** represent a valid UTC time after `2020-01-01 00:00:00`
+
+### RV-03: File Revision Integrity
+
+A `revision_type` of `"file"` **MUST** include:
+- `file_hash`
+- `file_nonce`
+
+**Hash Validation:**
+The `file_hash` **MUST** equal the SHA256 hash of either:
+1. The referenced file content concatenated with `file_nonce`, **OR**
+2. The **OPTIONAL** `content` field (serialized file data) concatenated with `file_nonce`, if present
+
+<Warning>
+Implementations MUST reject revisions where file_hash does not match either computation.
+</Warning>
+
+### RV-04: Signature Verification | Signature Type: ethereum:eip-191
+
+A `revision_type` of `"signature"` **MUST** include:
+- `signature`
+- `signature_public_key`
+- `signature_wallet_address`
+
+**Signature Validation:**
+- The `signature` **MUST** validate against `previous_verification_hash` using `signature_public_key` per `signature_type` `"ethereum:eip-191"` (secp256k1 curve)
+
+<Warning>
+Implementations MUST reject invalid signatures.
+</Warning>
+
+### RV-05: Witness Verification | Witness (Ethereum)
+
+A `revision_type` of `"witness"` **MUST** include:
+- `witness_network`
+- `witness_address`
+- `witness_smart_contract_address`
+
+#### Network Validation
+`witness_network` **MUST** be one of:
+- `"mainnet"`
+- `"sepolia"`
+- `"nostr"`
+- `"TSA_RFC3161"`
+
+<Warning>
+Other values MUST be rejected.
+</Warning>
+
+#### Merkle Root Validation
+- `witness_merkle_root`, if present, **MUST** be the valid Merkle root hash derived from `witness_merkle_proof`
+
+#### Address Validation
+- `witness_smart_contract_address` **MUST** be a valid Ethereum contract address for the specified `witness_network`, capable of storing and retrieving verification hashes
+
+#### Transaction Validation
+- `witness_transaction_hash`, if present, **MUST** be a valid transaction hash for the specified `witness_network`
+- `witness_sender_account_address`, if present, **MUST** be a valid account address for the specified `witness_network`
+
+#### Merkle Proof Validation
+- `witness_merkle_proof`, if present, **MUST** be a valid Merkle proof including `previous_verification_hash` as a leaf
+
+<Warning>
+Implementations MUST reject witness revisions failing these checks.
+</Warning>
+
+### RV-06: Signature Type Restriction
+
+`signature_type` **MUST** be one of:
+- `"ethereum:eip-191"`
+- `"did_key"`
+
+<Warning>
+Other values MUST be rejected for signature revisions.
+</Warning>
+
+### RV-07: Witness Type Restriction
+
+`witness_network` **MUST** be one of:
+- `"mainnet"`
+- `"sepolia"`
+- `"nostr"`
+- `"TSA_RFC3161"`
+
+<Warning>
+Other values MUST be rejected for witness revisions.
+</Warning>
+
+### RV-08: Indexed Content Verification
+
+Each key in `file_index` **MUST** be a valid `file_hash` from a revision with `revision_type` `"file"`.
+
+<Warning>
+Implementations MUST reject file_index entries referencing invalid or nonexistent file_hash values.
+</Warning>
+
+## Relational Verification Tests
+
+These tests ensure consistency across revisions, file_index, tree, and treeMapping. Types **MUST** be strict per [https://aqua-protocol.org/docs/v3/schema_2](https://aqua-protocol.org/docs/v3/schema_2).
+
+### RL-01: Previous Hash Linking
+
+`previous_verification_hash` **MUST** match a valid revision key in the pool of all verified revisions or be empty for the first (genesis) revision.
+
+<Warning>
+Implementations MUST reject invalid or nonexistent references.
+</Warning>
+
+### RL-02: Type: Link Revision
+
+A revision referenced by `revision_type` `link` **MUST** exist and be valid in the pool of all verified revisions.
+
+<Warning>
+Implementations MUST reject links to invalid or missing revisions and throw a "revision not found" error.
+</Warning>
+
+### RL-03: Loop Detection
+
+<Info>
+Implementations MUST have a loop detection mechanism.
+</Info>
+
+### RL-04: Fork Detection
+
+<Info>
+Implementations MUST have a fork detection mechanism to output deterministic results.
+</Info>
+
+### RL-05: Timestamp Order
+
+<Info>
+Implementations MUST have a timestamp plausibility check across revisions for local timestamps.
+</Info>
+
+<Info>
+Implementations MUST have a timestamp plausibility check for cryptographic timestamps (Witness events).
+</Info>
+
+## Test Implementation Guidelines
+
+### Required Test Coverage
+
+<CardGroup cols={2}>
+  <Card title="Revision Verification" icon="file-check">
+    Tests RV-01 through RV-08 must be implemented to validate individual revision objects.
+  </Card>
+  
+  <Card title="Relational Verification" icon="link">
+    Tests RL-01 through RL-05 must be implemented to validate relationships between revisions.
+  </Card>
+</CardGroup>
+
+### Compliance Requirements
+
+<Warning>
+All implementations MUST pass every test in both Revision Verification and Relational Verification domains to be considered conformant with the Aqua Protocol.
+</Warning>
+
+### Test Framework Recommendations
+
+While implementations may use any testing framework, consider:
+
+- **Unit tests** for individual revision validation (RV-01 through RV-08)
+- **Integration tests** for relational verification (RL-01 through RL-05)
+- **Edge case testing** for error conditions and boundary values
+- **Performance testing** for large revision sets
+
+### Error Handling
+
+Implementations should provide clear error messages for test failures:
+
+- **Field validation errors** should specify which field failed and why
+- **Signature validation errors** should indicate the specific signature verification failure
+- **Witness validation errors** should specify which witness component failed validation
+- **Relational errors** should clearly indicate the relationship that failed validation

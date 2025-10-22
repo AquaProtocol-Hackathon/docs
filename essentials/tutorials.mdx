@@ -1,0 +1,865 @@
+---
+title: "Tutorials"
+description: "Step-by-step tutorials for building with Aqua Protocol"
+icon: "graduation-cap"
+---
+
+# Tutorials
+
+Follow these step-by-step tutorials to learn how to build applications with Aqua Protocol.
+
+## Tutorial 1: Building a Document Notarization System
+
+### Prerequisites
+- Node.js 16+ installed
+- Basic knowledge of JavaScript/TypeScript
+- Aqua Protocol API key
+
+### Step 1: Project Setup
+```bash
+# Create a new project
+mkdir aqua-document-system
+cd aqua-document-system
+
+# Initialize npm project
+npm init -y
+
+# Install dependencies
+npm install @aqua-protocol/sdk express multer cors dotenv
+npm install -D nodemon
+
+# Create project structure
+mkdir src routes middleware
+touch src/app.js src/routes/documents.js src/middleware/auth.js
+touch .env
+```
+
+### Step 2: Environment Configuration
+```bash
+# .env
+AQUA_API_KEY=your_api_key_here
+AQUA_ENDPOINT=https://api.aqua-protocol.org/v3
+PORT=3000
+```
+
+### Step 3: Basic Express Server
+```javascript
+// src/app.js
+const express = require('express');
+const cors = require('cors');
+const documents = require('./routes/documents');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use('/api/documents', documents);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+```
+
+### Step 4: Aqua Protocol Integration
+```javascript
+// src/routes/documents.js
+const express = require('express');
+const multer = require('multer');
+const { AquaClient } = require('@aqua-protocol/sdk');
+const fs = require('fs');
+
+const router = express.Router();
+
+// Initialize Aqua client
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: process.env.AQUA_ENDPOINT
+});
+
+// Configure multer for file uploads
+const upload = multer({ dest: 'uploads/' });
+
+// Notarize document
+router.post('/notarize', upload.single('document'), async (req, res) => {
+  try {
+    const filePath = req.file.path;
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+    
+    // Notarize the document
+    const notarization = await client.notarize({
+      content: fileContent,
+      metadata: {
+        name: req.file.originalname,
+        type: req.file.mimetype,
+        size: req.file.size
+      }
+    });
+    
+    // Clean up temporary file
+    fs.unlinkSync(filePath);
+    
+    res.json({
+      success: true,
+      verificationHash: notarization.verificationHash,
+      message: 'Document notarized successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Verify document
+router.post('/verify', async (req, res) => {
+  try {
+    const { verificationHash, content } = req.body;
+    
+    const verification = await client.verify({
+      verificationHash,
+      content
+    });
+    
+    res.json({
+      isValid: verification.isValid,
+      timestamp: verification.timestamp,
+      blockNumber: verification.blockNumber
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+
+module.exports = router;
+```
+
+### Step 5: Test the System
+```bash
+# Start the server
+npm run dev
+
+# Test notarization
+curl -X POST http://localhost:3000/api/documents/notarize \
+  -F "document=@test-document.txt"
+
+# Test verification
+curl -X POST http://localhost:3000/api/documents/verify \
+  -H "Content-Type: application/json" \
+  -d '{"verificationHash":"0x...","content":"test content"}'
+```
+
+## Tutorial 2: Building an Identity Management System
+
+### Step 1: Database Setup
+```bash
+# Install database dependencies
+npm install sqlite3 sequelize
+
+# Create database models
+mkdir src/models
+touch src/models/User.js src/models/Identity.js
+```
+
+### Step 2: Database Models
+```javascript
+// src/models/User.js
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  walletAddress: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  publicKey: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  }
+});
+
+module.exports = User;
+```
+
+```javascript
+// src/models/Identity.js
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+
+const Identity = sequelize.define('Identity', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
+  },
+  identityHash: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  metadata: {
+    type: DataTypes.JSON,
+    allowNull: true
+  }
+});
+
+module.exports = Identity;
+```
+
+### Step 3: Identity Routes
+```javascript
+// src/routes/identities.js
+const express = require('express');
+const { AquaClient } = require('@aqua-protocol/sdk');
+const { User, Identity } = require('../models');
+
+const router = express.Router();
+
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: process.env.AQUA_ENDPOINT
+});
+
+// Create identity
+router.post('/create', async (req, res) => {
+  try {
+    const { name, email, walletAddress, publicKey } = req.body;
+    
+    // Create user in database
+    const user = await User.create({
+      name,
+      email,
+      walletAddress,
+      publicKey
+    });
+    
+    // Create Aqua Protocol identity
+    const identity = await client.createIdentity({
+      name,
+      email,
+      walletAddress,
+      publicKey,
+      metadata: {
+        userId: user.id,
+        created: new Date().toISOString()
+      }
+    });
+    
+    // Store identity in database
+    await Identity.create({
+      userId: user.id,
+      identityHash: identity.verificationHash,
+      metadata: identity.metadata
+    });
+    
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email
+      },
+      identity: {
+        hash: identity.verificationHash
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Verify identity
+router.post('/verify', async (req, res) => {
+  try {
+    const { identityHash, signature, publicKey } = req.body;
+    
+    const verification = await client.verifySignature({
+      verificationHash: identityHash,
+      signature,
+      publicKey
+    });
+    
+    res.json({
+      isValid: verification.isValid,
+      timestamp: verification.timestamp
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+
+module.exports = router;
+```
+
+## Tutorial 3: Building an Access Control System
+
+### Step 1: Access Control Models
+```javascript
+// src/models/Resource.js
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+
+const Resource = sequelize.define('Resource', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  type: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  resourceHash: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  metadata: {
+    type: DataTypes.JSON,
+    allowNull: true
+  }
+});
+
+module.exports = Resource;
+```
+
+### Step 2: Access Control Routes
+```javascript
+// src/routes/access.js
+const express = require('express');
+const { AquaClient } = require('@aqua-protocol/sdk');
+const { Resource } = require('../models');
+
+const router = express.Router();
+
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: process.env.AQUA_ENDPOINT
+});
+
+// Create access policy
+router.post('/policy', async (req, res) => {
+  try {
+    const { resourceId, rules } = req.body;
+    
+    const resource = await Resource.findByPk(resourceId);
+    if (!resource) {
+      return res.status(404).json({ error: 'Resource not found' });
+    }
+    
+    const policy = await client.createAccessPolicy({
+      resource: resource.resourceHash,
+      rules
+    });
+    
+    res.json({
+      success: true,
+      policyHash: policy.verificationHash
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+
+// Check access
+router.post('/check', async (req, res) => {
+  try {
+    const { resourceId, subject, action } = req.body;
+    
+    const resource = await Resource.findByPk(resourceId);
+    if (!resource) {
+      return res.status(404).json({ error: 'Resource not found' });
+    }
+    
+    const accessDecision = await client.checkAccess({
+      subject,
+      resource: resource.resourceHash,
+      action
+    });
+    
+    res.json({
+      granted: accessDecision.granted,
+      reason: accessDecision.reason
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+
+module.exports = router;
+```
+
+## Tutorial 4: Building a Supply Chain Tracking System
+
+### Step 1: Supply Chain Models
+```javascript
+// src/models/Product.js
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+
+const Product = sequelize.define('Product', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  sku: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  manufacturer: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  productHash: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  }
+});
+
+module.exports = Product;
+```
+
+```javascript
+// src/models/TrackingEvent.js
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+
+const TrackingEvent = sequelize.define('TrackingEvent', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  productId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Products',
+      key: 'id'
+    }
+  },
+  location: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  status: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  handler: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  verificationHash: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  timestamp: {
+    type: DataTypes.DATE,
+    allowNull: false
+  }
+});
+
+module.exports = TrackingEvent;
+```
+
+### Step 2: Supply Chain Routes
+```javascript
+// src/routes/supply-chain.js
+const express = require('express');
+const { AquaClient } = require('@aqua-protocol/sdk');
+const { Product, TrackingEvent } = require('../models');
+
+const router = express.Router();
+
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: process.env.AQUA_ENDPOINT
+});
+
+// Create product
+router.post('/products', async (req, res) => {
+  try {
+    const { name, sku, manufacturer } = req.body;
+    
+    // Create product in database
+    const product = await Product.create({
+      name,
+      sku,
+      manufacturer
+    });
+    
+    // Notarize product creation
+    const notarization = await client.notarize({
+      content: JSON.stringify({
+        productId: product.id,
+        name: product.name,
+        sku: product.sku,
+        manufacturer: product.manufacturer,
+        created: new Date().toISOString()
+      }),
+      metadata: {
+        type: 'product_creation',
+        productId: product.id,
+        sku: product.sku
+      }
+    });
+    
+    // Update product with hash
+    product.productHash = notarization.verificationHash;
+    await product.save();
+    
+    res.json({
+      success: true,
+      product: {
+        id: product.id,
+        name: product.name,
+        sku: product.sku,
+        productHash: product.productHash
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+
+// Track product
+router.post('/track', async (req, res) => {
+  try {
+    const { productId, location, status, handler } = req.body;
+    
+    const product = await Product.findByPk(productId);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    
+    // Create tracking data
+    const trackingData = {
+      productId: product.id,
+      location,
+      status,
+      handler,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Notarize tracking event
+    const notarization = await client.notarize({
+      content: JSON.stringify(trackingData),
+      metadata: {
+        type: 'supply_chain_tracking',
+        productId: product.id,
+        location,
+        status
+      }
+    });
+    
+    // Store tracking event
+    const trackingEvent = await TrackingEvent.create({
+      productId: product.id,
+      location,
+      status,
+      handler,
+      verificationHash: notarization.verificationHash,
+      timestamp: new Date()
+    });
+    
+    res.json({
+      success: true,
+      trackingEvent: {
+        id: trackingEvent.id,
+        verificationHash: trackingEvent.verificationHash
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+
+// Verify product authenticity
+router.get('/verify/:productId', async (req, res) => {
+  try {
+    const { productId } = req.params;
+    
+    const product = await Product.findByPk(productId);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    
+    // Get all tracking events for product
+    const trackingEvents = await TrackingEvent.findAll({
+      where: { productId },
+      order: [['timestamp', 'ASC']]
+    });
+    
+    const verificationResults = [];
+    
+    for (const event of trackingEvents) {
+      const verification = await client.verify({
+        verificationHash: event.verificationHash,
+        content: JSON.stringify({
+          productId: event.productId,
+          location: event.location,
+          status: event.status,
+          handler: event.handler,
+          timestamp: event.timestamp
+        })
+      });
+      
+      verificationResults.push({
+        event,
+        verification
+      });
+    }
+    
+    res.json({
+      product: {
+        id: product.id,
+        name: product.name,
+        sku: product.sku
+      },
+      trackingEvents: verificationResults
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+
+module.exports = router;
+```
+
+## Tutorial 5: Building a Healthcare Records System
+
+### Step 1: Healthcare Models
+```javascript
+// src/models/Patient.js
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+
+const Patient = sequelize.define('Patient', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  patientId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  dateOfBirth: {
+    type: DataTypes.DATE,
+    allowNull: false
+  },
+  identityHash: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  }
+});
+
+module.exports = Patient;
+```
+
+### Step 2: Healthcare Routes
+```javascript
+// src/routes/healthcare.js
+const express = require('express');
+const { AquaClient } = require('@aqua-protocol/sdk');
+const { Patient } = require('../models');
+
+const router = express.Router();
+
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: process.env.AQUA_ENDPOINT
+});
+
+// Create patient record
+router.post('/patients', async (req, res) => {
+  try {
+    const { patientId, name, dateOfBirth, medicalHistory } = req.body;
+    
+    // Create patient in database
+    const patient = await Patient.create({
+      patientId,
+      name,
+      dateOfBirth
+    });
+    
+    // Create patient record
+    const record = {
+      patientId: patient.patientId,
+      name: patient.name,
+      dateOfBirth: patient.dateOfBirth,
+      medicalHistory: medicalHistory || [],
+      createdBy: req.user.identityHash,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Notarize patient record
+    const notarization = await client.notarize({
+      content: JSON.stringify(record),
+      metadata: {
+        type: 'patient_record',
+        patientId: patient.patientId,
+        confidentiality: 'high'
+      },
+      options: {
+        hashingMethod: 'tree' // Enable selective disclosure
+      }
+    });
+    
+    // Update patient with identity hash
+    patient.identityHash = notarization.verificationHash;
+    await patient.save();
+    
+    res.json({
+      success: true,
+      patient: {
+        id: patient.id,
+        patientId: patient.patientId,
+        name: patient.name,
+        identityHash: patient.identityHash
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+
+// Check patient record access
+router.get('/patients/:patientId/access', async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    const { requesterId, purpose } = req.query;
+    
+    const patient = await Patient.findOne({ where: { patientId } });
+    if (!patient) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+    
+    // Check access using Aqua Protocol
+    const accessDecision = await client.checkAccess({
+      subject: requesterId,
+      resource: `medical_record:${patient.patientId}`,
+      action: 'read',
+      context: {
+        purpose: purpose,
+        timestamp: new Date().toISOString(),
+        requesterRole: req.user.role
+      }
+    });
+    
+    res.json({
+      granted: accessDecision.granted,
+      reason: accessDecision.reason,
+      patient: {
+        id: patient.id,
+        patientId: patient.patientId,
+        name: patient.name
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+
+module.exports = router;
+```
+
+## Best Practices for Tutorials
+
+### Code Organization
+- **Separate concerns** - Keep Aqua Protocol logic separate from business logic
+- **Use middleware** - Implement reusable middleware for common functionality
+- **Error handling** - Implement comprehensive error handling
+- **Validation** - Validate all inputs before processing
+
+### Security
+- **Input validation** - Validate all inputs before processing
+- **API key protection** - Never expose API keys in client-side code
+- **Access control** - Implement proper access control for all endpoints
+- **Audit logging** - Log all important operations for auditing
+
+### Testing
+- **Unit tests** - Write unit tests for all functions
+- **Integration tests** - Test the complete workflow
+- **Error testing** - Test error conditions and edge cases
+- **Performance testing** - Test with realistic data volumes
+
+### Deployment
+- **Environment variables** - Use environment variables for configuration
+- **Database migrations** - Use proper database migration tools
+- **Monitoring** - Implement monitoring and logging
+- **Backup** - Implement proper backup and recovery procedures

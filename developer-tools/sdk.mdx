@@ -1,0 +1,269 @@
+---
+title: "SDK"
+description: "Software Development Kit for Aqua Protocol integration"
+icon: "code"
+---
+
+# Getting Started with Aqua Protocol SDK
+
+## Installation
+
+```bash
+npm install aqua-js-sdk
+```
+
+## Basic Concepts
+
+The Aqua Protocol SDK provides a system for file notarization and verification using three main operations:
+
+<CardGroup cols={2}>
+  <Card title="Notarization" icon="file-plus">
+    Creating a genesis revision for your file
+  </Card>
+  
+  <Card title="Signing" icon="signature">
+    Adding cryptographic signatures using various methods
+  </Card>
+  
+  <Card title="Witnessing" icon="eye">
+    Recording the file state on different platforms
+  </Card>
+  
+  <Card title="Verification" icon="check-circle">
+    Validating the authenticity of files
+  </Card>
+</CardGroup>
+
+## Quick Start
+
+### Using the Chainable API (Recommended)
+
+```javascript
+import { AquafierChainable } from 'aqua-js-sdk';
+
+// Prepare your file object
+const fileObject = {
+  name: "document.pdf",
+  hash: "0x...", // File hash
+  content: "..." // Optional file content
+};
+
+// Create credentials (example for MetaMask)
+const credentials = {
+  mnemonic: "",      // For CLI signing
+  nostr_sk: "",      // For Nostr witnessing
+  did_key: "",       // For DID signing
+  alchemy_key: "",   // For Ethereum operations
+  witness_eth_network: "sepolia",
+  witness_method: "metamask"
+};
+
+// Create and process your file
+const aqua = new AquafierChainable(null);
+const result = await aqua
+  .notarize(fileObject)
+  .sign("metamask", credentials)
+  .witness("eth", "sepolia", "metamask", credentials)
+  .verify();
+
+// Get results
+const tree = result.getValue();
+const logs = result.getLogs();
+```
+
+### Using the Standard API
+
+```javascript
+import { Aquafier } from 'aqua-js-sdk';
+
+const aqua = new Aquafier();
+
+// Create genesis revision
+const genesis = await aqua.createGenesisRevision(fileObject);
+
+// Sign the tree
+const signed = await aqua.signAquaTree(genesis.data.aquaTree, "metamask", credentials);
+
+// Witness the tree
+const witnessed = await aqua.witnessAquaTree(
+  signed.data.aquaTree,
+  "eth",
+  "sepolia",
+  "metamask",
+  credentials
+);
+
+// Verify the tree
+const verified = await aqua.verifyAquaTree(witnessed.data.aquaTree, [fileObject]);
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Core Concepts" icon="brain" href="/essentials/notarization">
+    Read about Core Concepts to understand the system better
+  </Card>
+  
+  <Card title="Common Use Cases" icon="lightbulb" href="/essentials/examples">
+    Check out Common Use Cases for practical examples
+  </Card>
+  
+  <Card title="API Reference" icon="book" href="/api-reference/introduction">
+    Review the API Reference for detailed documentation
+  </Card>
+  
+  <Card title="Quickstart Guide" icon="rocket" href="/quickstart">
+    Get started with our comprehensive quickstart guide
+  </Card>
+</CardGroup>
+
+## SDK Features
+
+### Chainable API
+
+The chainable API provides a fluent interface for building Aqua operations:
+
+```javascript
+const result = await aqua
+  .notarize(fileObject)           // Create genesis revision
+  .sign("metamask", credentials)  // Add signature
+  .witness("eth", "sepolia", "metamask", credentials)  // Add witness
+  .verify();                     // Verify the complete tree
+```
+
+### Standard API
+
+The standard API provides individual methods for each operation:
+
+```javascript
+// Step-by-step approach
+const genesis = await aqua.createGenesisRevision(fileObject);
+const signed = await aqua.signAquaTree(genesis.data.aquaTree, "metamask", credentials);
+const witnessed = await aqua.witnessAquaTree(signed.data.aquaTree, "eth", "sepolia", "metamask", credentials);
+const verified = await aqua.verifyAquaTree(witnessed.data.aquaTree, [fileObject]);
+```
+
+### Credentials Configuration
+
+The SDK supports multiple authentication methods:
+
+<CardGroup cols={2}>
+  <Card title="MetaMask" icon="wallet">
+    Browser-based wallet integration for web applications
+  </Card>
+  
+  <Card title="CLI Signing" icon="terminal">
+    Command-line interface with mnemonic-based signing
+  </Card>
+  
+  <Card title="DID Keys" icon="key">
+    Decentralized identity key management
+  </Card>
+  
+  <Card title="Nostr" icon="satellite">
+    Nostr protocol integration for witnessing
+  </Card>
+</CardGroup>
+
+### Supported Networks
+
+<CardGroup cols={2}>
+  <Card title="Ethereum Mainnet" icon="ethereum">
+    Production network for mainnet witnessing
+  </Card>
+  
+  <Card title="Sepolia Testnet" icon="test-tube">
+    Test network for development and testing
+  </Card>
+  
+  <Card title="Nostr" icon="network">
+    Decentralized social protocol for witnessing
+  </Card>
+  
+  <Card title="TSA RFC3161" icon="clock">
+    Timestamp authority for cryptographic timestamps
+  </Card>
+</CardGroup>
+
+## Error Handling
+
+The SDK provides comprehensive error handling and logging:
+
+```javascript
+try {
+  const result = await aqua
+    .notarize(fileObject)
+    .sign("metamask", credentials)
+    .witness("eth", "sepolia", "metamask", credentials)
+    .verify();
+    
+  // Success
+  const tree = result.getValue();
+  const logs = result.getLogs();
+  
+} catch (error) {
+  // Handle errors
+  console.error('Aqua operation failed:', error.message);
+  
+  // Get detailed logs
+  const logs = result.getLogs();
+  console.log('Operation logs:', logs);
+}
+```
+
+## Best Practices
+
+<Info>
+Follow these best practices for optimal SDK usage:
+</Info>
+
+- **Use the chainable API** for simple workflows
+- **Handle errors gracefully** with try-catch blocks
+- **Validate credentials** before making operations
+- **Use appropriate networks** (testnet for development, mainnet for production)
+- **Store sensitive credentials securely** (environment variables, secure vaults)
+- **Monitor operation logs** for debugging and auditing
+
+## Advanced Usage
+
+### Custom File Objects
+
+```javascript
+const customFileObject = {
+  name: "contract.sol",
+  hash: "0x1234567890abcdef...",
+  content: "pragma solidity ^0.8.0; ...",
+  metadata: {
+    type: "smart-contract",
+    version: "1.0.0",
+    author: "developer@example.com"
+  }
+};
+```
+
+### Batch Operations
+
+```javascript
+// Process multiple files
+const files = [file1, file2, file3];
+const results = await Promise.all(
+  files.map(file => 
+    aqua.notarize(file).sign("metamask", credentials).verify()
+  )
+);
+```
+
+### Custom Witnessing
+
+```javascript
+// Custom witness configuration
+const customCredentials = {
+  alchemy_key: "your-alchemy-key",
+  witness_eth_network: "mainnet",
+  witness_method: "metamask",
+  custom_witness_options: {
+    gas_limit: 100000,
+    gas_price: "20000000000"
+  }
+};
+```

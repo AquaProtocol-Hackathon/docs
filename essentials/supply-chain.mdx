@@ -1,0 +1,665 @@
+---
+title: "Supply Chain"
+description: "Use Aqua Protocol for transparent and verifiable supply chain tracking"
+icon: "truck"
+---
+
+# Supply Chain
+
+Aqua Protocol provides comprehensive supply chain tracking and verification capabilities that ensure transparency, authenticity, and traceability throughout the entire supply chain process.
+
+## Overview
+
+Supply chain tracking with Aqua Protocol enables:
+
+- **End-to-end traceability** of products and materials
+- **Tamper-proof verification** of supply chain events
+- **Transparent audit trails** for compliance and reporting
+- **Decentralized verification** without centralized authorities
+- **Real-time tracking** and monitoring capabilities
+
+## Use Cases
+
+### Food and Agriculture
+- **Food safety** and traceability
+- **Organic certification** and verification
+- **Farm-to-table** tracking
+- **Recall management** and safety
+
+### Pharmaceuticals
+- **Drug authenticity** and verification
+- **Cold chain** monitoring and compliance
+- **Regulatory compliance** and reporting
+- **Counterfeit prevention** and detection
+
+### Manufacturing
+- **Component tracking** and verification
+- **Quality control** and assurance
+- **Supplier verification** and compliance
+- **Production monitoring** and optimization
+
+### Logistics and Transportation
+- **Package tracking** and verification
+- **Route optimization** and monitoring
+- **Delivery confirmation** and proof
+- **Cargo security** and protection
+
+## Implementation Examples
+
+### Basic Supply Chain Tracking
+```javascript
+import { AquaClient } from '@aqua-protocol/sdk';
+
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: 'https://api.aqua-protocol.org/v3'
+});
+
+// Track product through supply chain
+const trackProduct = async (productId, location, status, handler) => {
+  const trackingData = {
+    productId,
+    location,
+    status,
+    handler,
+    timestamp: new Date().toISOString()
+  };
+  
+  // Notarize tracking data
+  const notarization = await client.notarize({
+    content: JSON.stringify(trackingData),
+    metadata: {
+      type: 'supply_chain_tracking',
+      productId: productId,
+      location: location,
+      status: status
+    }
+  });
+  
+  return notarization.verificationHash;
+};
+
+// Verify product authenticity
+const verifyProduct = async (productId) => {
+  // Get all tracking records for product
+  const trackingRecords = await getTrackingRecords(productId);
+  
+  const verificationResults = [];
+  
+  for (const record of trackingRecords) {
+    const verification = await client.verify({
+      verificationHash: record.verificationHash,
+      content: JSON.stringify({
+        productId: record.productId,
+        location: record.location,
+        status: record.status,
+        handler: record.handler,
+        timestamp: record.timestamp
+      })
+    });
+    
+    verificationResults.push({
+      record,
+      verification
+    });
+  }
+  
+  return verificationResults;
+};
+```
+
+### Product Creation and Tracking
+```javascript
+// Create product in supply chain
+const createProduct = async (productData) => {
+  const product = {
+    productId: productData.productId,
+    name: productData.name,
+    category: productData.category,
+    manufacturer: productData.manufacturer,
+    created: new Date().toISOString()
+  };
+  
+  // Notarize product creation
+  const notarization = await client.notarize({
+    content: JSON.stringify(product),
+    metadata: {
+      type: 'product_creation',
+      productId: product.productId,
+      category: product.category
+    }
+  });
+  
+  return {
+    product,
+    verificationHash: notarization.verificationHash
+  };
+};
+
+// Track product movement
+const trackMovement = async (productId, fromLocation, toLocation, handler) => {
+  const movement = {
+    productId,
+    fromLocation,
+    toLocation,
+    handler,
+    timestamp: new Date().toISOString(),
+    status: 'in_transit'
+  };
+  
+  const notarization = await client.notarize({
+    content: JSON.stringify(movement),
+    metadata: {
+      type: 'product_movement',
+      productId: productId,
+      fromLocation: fromLocation,
+      toLocation: toLocation
+    }
+  });
+  
+  return notarization.verificationHash;
+};
+```
+
+### Quality Control Integration
+```javascript
+// Quality control verification
+const qualityControl = async (productId, qualityData) => {
+  const qualityRecord = {
+    productId,
+    qualityData,
+    inspector: qualityData.inspector,
+    timestamp: new Date().toISOString(),
+    status: qualityData.passed ? 'passed' : 'failed'
+  };
+  
+  const notarization = await client.notarize({
+    content: JSON.stringify(qualityRecord),
+    metadata: {
+      type: 'quality_control',
+      productId: productId,
+      status: qualityRecord.status
+    }
+  });
+  
+  return notarization.verificationHash;
+};
+
+// Temperature monitoring
+const temperatureMonitoring = async (productId, temperatureData) => {
+  const temperatureRecord = {
+    productId,
+    temperature: temperatureData.temperature,
+    location: temperatureData.location,
+    timestamp: new Date().toISOString(),
+    status: temperatureData.temperature < 4 ? 'safe' : 'unsafe'
+  };
+  
+  const notarization = await client.notarize({
+    content: JSON.stringify(temperatureRecord),
+    metadata: {
+      type: 'temperature_monitoring',
+      productId: productId,
+      temperature: temperatureData.temperature
+    }
+  });
+  
+  return notarization.verificationHash;
+};
+```
+
+## Industry-Specific Implementations
+
+### Food and Agriculture
+```javascript
+// Food safety tracking
+class FoodSafetyTracker {
+  constructor(aquaClient) {
+    this.client = aquaClient;
+  }
+
+  async trackHarvest(farmId, cropData) {
+    const harvest = {
+      farmId,
+      cropType: cropData.cropType,
+      harvestDate: cropData.harvestDate,
+      location: cropData.location,
+      quality: cropData.quality,
+      organic: cropData.organic
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(harvest),
+      metadata: {
+        type: 'harvest_tracking',
+        farmId: farmId,
+        cropType: cropData.cropType
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+
+  async trackProcessing(processingId, processingData) {
+    const processing = {
+      processingId,
+      productId: processingData.productId,
+      processType: processingData.processType,
+      temperature: processingData.temperature,
+      duration: processingData.duration,
+      quality: processingData.quality
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(processing),
+      metadata: {
+        type: 'processing_tracking',
+        processingId: processingId,
+        processType: processingData.processType
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+
+  async trackDistribution(distributionId, distributionData) {
+    const distribution = {
+      distributionId,
+      productId: distributionData.productId,
+      fromLocation: distributionData.fromLocation,
+      toLocation: distributionData.toLocation,
+      temperature: distributionData.temperature,
+      transportMethod: distributionData.transportMethod
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(distribution),
+      metadata: {
+        type: 'distribution_tracking',
+        distributionId: distributionId,
+        transportMethod: distributionData.transportMethod
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+}
+```
+
+### Pharmaceuticals
+```javascript
+// Pharmaceutical tracking
+class PharmaceuticalTracker {
+  constructor(aquaClient) {
+    this.client = aquaClient;
+  }
+
+  async trackManufacturing(batchId, manufacturingData) {
+    const manufacturing = {
+      batchId,
+      drugName: manufacturingData.drugName,
+      manufacturer: manufacturingData.manufacturer,
+      productionDate: manufacturingData.productionDate,
+      expiryDate: manufacturingData.expiryDate,
+      quality: manufacturingData.quality
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(manufacturing),
+      metadata: {
+        type: 'manufacturing_tracking',
+        batchId: batchId,
+        drugName: manufacturingData.drugName
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+
+  async trackColdChain(batchId, temperatureData) {
+    const coldChain = {
+      batchId,
+      temperature: temperatureData.temperature,
+      location: temperatureData.location,
+      timestamp: new Date().toISOString(),
+      status: temperatureData.temperature < 8 ? 'safe' : 'unsafe'
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(coldChain),
+      metadata: {
+        type: 'cold_chain_tracking',
+        batchId: batchId,
+        temperature: temperatureData.temperature
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+
+  async trackDistribution(batchId, distributionData) {
+    const distribution = {
+      batchId,
+      fromLocation: distributionData.fromLocation,
+      toLocation: distributionData.toLocation,
+      transportMethod: distributionData.transportMethod,
+      temperature: distributionData.temperature,
+      timestamp: new Date().toISOString()
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(distribution),
+      metadata: {
+        type: 'distribution_tracking',
+        batchId: batchId,
+        transportMethod: distributionData.transportMethod
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+}
+```
+
+### Manufacturing
+```javascript
+// Manufacturing tracking
+class ManufacturingTracker {
+  constructor(aquaClient) {
+    this.client = aquaClient;
+  }
+
+  async trackComponent(componentId, componentData) {
+    const component = {
+      componentId,
+      componentType: componentData.componentType,
+      supplier: componentData.supplier,
+      quality: componentData.quality,
+      timestamp: new Date().toISOString()
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(component),
+      metadata: {
+        type: 'component_tracking',
+        componentId: componentId,
+        componentType: componentData.componentType
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+
+  async trackAssembly(assemblyId, assemblyData) {
+    const assembly = {
+      assemblyId,
+      productId: assemblyData.productId,
+      components: assemblyData.components,
+      assemblyDate: assemblyData.assemblyDate,
+      quality: assemblyData.quality
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(assembly),
+      metadata: {
+        type: 'assembly_tracking',
+        assemblyId: assemblyId,
+        productId: assemblyData.productId
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+
+  async trackQualityControl(productId, qualityData) {
+    const qualityControl = {
+      productId,
+      testType: qualityData.testType,
+      result: qualityData.result,
+      inspector: qualityData.inspector,
+      timestamp: new Date().toISOString()
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(qualityControl),
+      metadata: {
+        type: 'quality_control',
+        productId: productId,
+        testType: qualityData.testType
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+}
+```
+
+## Integration Patterns
+
+### IoT Integration
+```javascript
+// IoT sensor integration
+class IoTSupplyChainTracker {
+  constructor(aquaClient) {
+    this.client = aquaClient;
+  }
+
+  async trackSensorData(sensorId, sensorData) {
+    const data = {
+      sensorId,
+      productId: sensorData.productId,
+      temperature: sensorData.temperature,
+      humidity: sensorData.humidity,
+      location: sensorData.location,
+      timestamp: new Date().toISOString()
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(data),
+      metadata: {
+        type: 'iot_sensor_data',
+        sensorId: sensorId,
+        productId: sensorData.productId
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+
+  async trackLocation(productId, locationData) {
+    const location = {
+      productId,
+      latitude: locationData.latitude,
+      longitude: locationData.longitude,
+      altitude: locationData.altitude,
+      timestamp: new Date().toISOString()
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(location),
+      metadata: {
+        type: 'location_tracking',
+        productId: productId,
+        latitude: locationData.latitude,
+        longitude: locationData.longitude
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+}
+```
+
+### Blockchain Integration
+```javascript
+// Blockchain integration for supply chain
+class BlockchainSupplyChainTracker {
+  constructor(aquaClient, blockchainClient) {
+    this.client = aquaClient;
+    this.blockchain = blockchainClient;
+  }
+
+  async trackOnBlockchain(productId, trackingData) {
+    // Notarize with Aqua Protocol
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(trackingData),
+      metadata: {
+        type: 'blockchain_tracking',
+        productId: productId
+      }
+    });
+    
+    // Store on blockchain
+    const txHash = await this.blockchain.storeData({
+      productId: productId,
+      verificationHash: notarization.verificationHash,
+      data: trackingData
+    });
+    
+    return {
+      verificationHash: notarization.verificationHash,
+      transactionHash: txHash
+    };
+  }
+
+  async verifyOnBlockchain(productId) {
+    // Get data from blockchain
+    const blockchainData = await this.blockchain.getData(productId);
+    
+    // Verify with Aqua Protocol
+    const verification = await this.client.verify({
+      verificationHash: blockchainData.verificationHash,
+      content: JSON.stringify(blockchainData.data)
+    });
+    
+    return {
+      blockchainData,
+      verification
+    };
+  }
+}
+```
+
+## Analytics and Reporting
+
+### Supply Chain Analytics
+```javascript
+// Supply chain analytics
+class SupplyChainAnalytics {
+  constructor(aquaClient) {
+    this.client = aquaClient;
+  }
+
+  async getProductJourney(productId) {
+    const journey = await this.getTrackingRecords(productId);
+    
+    return {
+      productId,
+      totalEvents: journey.length,
+      duration: this.calculateDuration(journey),
+      locations: this.extractLocations(journey),
+      quality: this.analyzeQuality(journey)
+    };
+  }
+
+  async getQualityMetrics(productId) {
+    const qualityRecords = await this.getQualityRecords(productId);
+    
+    return {
+      productId,
+      totalTests: qualityRecords.length,
+      passedTests: qualityRecords.filter(r => r.passed).length,
+      failedTests: qualityRecords.filter(r => !r.passed).length,
+      averageScore: this.calculateAverageScore(qualityRecords)
+    };
+  }
+
+  async getTemperatureAnalysis(productId) {
+    const temperatureRecords = await this.getTemperatureRecords(productId);
+    
+    return {
+      productId,
+      averageTemperature: this.calculateAverageTemperature(temperatureRecords),
+      minTemperature: Math.min(...temperatureRecords.map(r => r.temperature)),
+      maxTemperature: Math.max(...temperatureRecords.map(r => r.temperature)),
+      violations: temperatureRecords.filter(r => r.temperature > 8).length
+    };
+  }
+}
+```
+
+### Compliance Reporting
+```javascript
+// Compliance reporting
+class ComplianceReporter {
+  constructor(aquaClient) {
+    this.client = aquaClient;
+  }
+
+  async generateComplianceReport(productId, startDate, endDate) {
+    const report = {
+      productId,
+      period: { startDate, endDate },
+      totalEvents: 0,
+      qualityEvents: 0,
+      temperatureEvents: 0,
+      violations: 0,
+      compliance: 'COMPLIANT'
+    };
+    
+    const events = await this.getEventsInPeriod(productId, startDate, endDate);
+    
+    report.totalEvents = events.length;
+    report.qualityEvents = events.filter(e => e.type === 'quality_control').length;
+    report.temperatureEvents = events.filter(e => e.type === 'temperature_monitoring').length;
+    report.violations = events.filter(e => e.violation).length;
+    
+    if (report.violations > 0) {
+      report.compliance = 'NON_COMPLIANT';
+    }
+    
+    return report;
+  }
+
+  async generateAuditTrail(productId) {
+    const auditTrail = await this.getAuditTrail(productId);
+    
+    return {
+      productId,
+      totalRecords: auditTrail.length,
+      records: auditTrail.map(record => ({
+        timestamp: record.timestamp,
+        event: record.event,
+        handler: record.handler,
+        verificationHash: record.verificationHash
+      }))
+    };
+  }
+}
+```
+
+## Best Practices
+
+### Data Management
+- **Standardize data formats** across the supply chain
+- **Implement data validation** at each step
+- **Use consistent identifiers** for products and locations
+- **Regular data cleanup** and maintenance
+
+### Security
+- **Protect sensitive data** with encryption
+- **Implement access control** for different stakeholders
+- **Regular security audits** and updates
+- **Monitor for anomalies** and suspicious activity
+
+### Performance
+- **Optimize data storage** and retrieval
+- **Use batch operations** for bulk data processing
+- **Implement caching** for frequently accessed data
+- **Monitor performance** and optimize as needed
+
+### Compliance
+- **Maintain audit trails** for all operations
+- **Implement data retention** policies
+- **Ensure regulatory compliance** for your industry
+- **Regular compliance reviews** and updates

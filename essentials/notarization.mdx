@@ -1,0 +1,151 @@
+---
+title: "Notarization"
+description: "Learn how Aqua Protocol enables secure document notarization and verification"
+icon: "file-check"
+---
+
+# Notarization
+
+Aqua Protocol provides a foundational framework for building distributed trust networks through secure notarization and verification systems.
+
+## What is Notarization?
+
+Notarization in Aqua Protocol refers to the process of creating an immutable, cryptographically secured record of data existence and integrity. This process ensures that:
+
+- **Data integrity** is maintained through cryptographic hashing
+- **Timestamp verification** provides proof of when data was notarized
+- **Immutable records** are stored on the blockchain for permanent verification
+- **Decentralized trust** eliminates reliance on centralized authorities
+
+## How Aqua Notarization Works
+
+### 1. Content Hashing
+The first step in notarization involves creating a cryptographic hash of the content:
+
+```javascript
+import { AquaClient } from '@aqua-protocol/sdk';
+import crypto from 'crypto';
+
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: 'https://api.aqua-protocol.org/v3'
+});
+
+// Create content hash
+const content = 'Document content to be notarized';
+const contentHash = crypto.createHash('sha256')
+  .update(content)
+  .digest('hex');
+```
+
+### 2. Revision Creation
+Create a file revision to notarize the content:
+
+```javascript
+const notarization = await client.createNotarization({
+  content: content,
+  fileHash: contentHash,
+  fileNonce: crypto.randomBytes(32).toString('hex'),
+  revisionType: 'file'
+});
+
+console.log('Notarization created:', notarization.verificationHash);
+```
+
+### 3. Blockchain Witness
+Add a witness revision to secure the notarization on the blockchain:
+
+```javascript
+const witness = await client.addWitness({
+  previousVerificationHash: notarization.verificationHash,
+  witnessNetwork: 'sepolia',
+  witnessSmartContractAddress: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611'
+});
+
+console.log('Witness added:', witness.transactionHash);
+```
+
+## Notarization Types
+
+### File Notarization
+Notarize files and documents for integrity verification:
+
+- **Document verification** for legal and business applications
+- **Intellectual property** protection and timestamping
+- **Compliance** and regulatory requirements
+- **Audit trails** for data governance
+
+### Content Notarization
+Notarize specific content or data structures:
+
+- **Database records** and data integrity
+- **Configuration files** and system state
+- **API responses** and data consistency
+- **Log files** and audit trails
+
+### Form Notarization
+Special notarization for layer 2 applications:
+
+- **Identity claims** and attestations
+- **Access control** policies
+- **Selective disclosure** capabilities
+- **Privacy-preserving** verification
+
+## Verification Process
+
+Once content is notarized, it can be verified at any time:
+
+```javascript
+const verification = await client.verifyNotarization({
+  verificationHash: notarization.verificationHash,
+  expectedContent: content
+});
+
+if (verification.isValid) {
+  console.log('Notarization verified successfully');
+  console.log('Timestamp:', verification.timestamp);
+  console.log('Block number:', verification.blockNumber);
+} else {
+  console.log('Notarization verification failed');
+}
+```
+
+## Use Cases
+
+### Legal Documents
+- **Contract verification** and authenticity
+- **Legal compliance** and regulatory requirements
+- **Evidence preservation** for legal proceedings
+- **Notary services** and document certification
+
+### Business Applications
+- **Supply chain** verification and tracking
+- **Financial records** and audit trails
+- **Compliance** and regulatory reporting
+- **Data governance** and integrity
+
+### Identity Management
+- **Identity verification** and attestation
+- **Credential management** and verification
+- **Access control** and authorization
+- **Privacy-preserving** identity solutions
+
+## Best Practices
+
+### Content Preparation
+- **Normalize content** before hashing to ensure consistency
+- **Include metadata** such as file names and timestamps
+- **Use appropriate nonces** for additional entropy
+- **Validate content** before notarization
+
+### Security Considerations
+- **Protect private keys** used for signing
+- **Use secure networks** for witness transactions
+- **Regular verification** of notarized content
+- **Backup verification hashes** for recovery
+
+### Performance Optimization
+- **Batch operations** for multiple notarizations
+- **Use appropriate networks** based on requirements
+- **Monitor gas costs** for witness transactions
+- **Implement caching** for frequent verifications

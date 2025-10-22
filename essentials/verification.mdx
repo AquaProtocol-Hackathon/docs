@@ -1,0 +1,253 @@
+---
+title: "Verification"
+description: "Comprehensive guide to Aqua Protocol verification processes and validation"
+icon: "shield-check"
+---
+
+# Verification
+
+Aqua Protocol's verification system ensures data integrity, authenticity, and provenance through cryptographic validation and blockchain-based verification.
+
+## Overview
+
+Verification in Aqua Protocol is the process of validating that data has not been tampered with and maintains its integrity since the time of notarization. This process involves:
+
+- **Hash validation** to ensure content integrity
+- **Signature verification** to authenticate signers
+- **Witness validation** to confirm blockchain records
+- **Chain verification** to validate the complete revision history
+
+## Verification Types
+
+### Content Verification
+Verify that content matches its notarized hash:
+
+```javascript
+import { AquaVerifier } from '@aqua-protocol/verifier';
+
+const verifier = new AquaVerifier({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: 'https://api.aqua-protocol.org/v3'
+});
+
+// Verify content integrity
+const isValid = await verifier.verifyContent({
+  content: 'Document content',
+  expectedHash: '0x1234567890abcdef...',
+  verificationHash: '0xabcdef1234567890...'
+});
+
+console.log('Content verification:', isValid ? 'Valid' : 'Invalid');
+```
+
+### Signature Verification
+Verify digital signatures on revisions:
+
+```javascript
+const signatureValid = await verifier.verifySignature({
+  verificationHash: '0xabcdef1234567890...',
+  signature: '0x799cd8177dc2c5dc34d389601175d550466a73509b71d533aaa3ff0ee958b3b3...',
+  publicKey: '0x0380a77a1a6d59be5c10d7ee5e10def79283938bb8a60025d0fe5404e650e8ccc1',
+  signatureType: 'ethereum:eip-191'
+});
+
+console.log('Signature verification:', signatureValid ? 'Valid' : 'Invalid');
+```
+
+### Witness Verification
+Verify blockchain witness records:
+
+```javascript
+const witnessValid = await verifier.verifyWitness({
+  verificationHash: '0xabcdef1234567890...',
+  witnessNetwork: 'sepolia',
+  witnessTransactionHash: '0xad007675d238746783d697ca8cbc0260f87275430d43ba08dea11d26a00e8850',
+  witnessSmartContractAddress: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611'
+});
+
+console.log('Witness verification:', witnessValid ? 'Valid' : 'Invalid');
+```
+
+## Verification Process
+
+### 1. Hash Chain Validation
+Verify the complete chain of revisions:
+
+```javascript
+const chainValid = await verifier.verifyChain({
+  verificationHash: '0xabcdef1234567890...',
+  includeWitness: true,
+  includeSignatures: true
+});
+
+console.log('Chain verification:', chainValid ? 'Valid' : 'Invalid');
+```
+
+### 2. Timestamp Validation
+Verify timestamp consistency across revisions:
+
+```javascript
+const timestampValid = await verifier.verifyTimestamps({
+  verificationHash: '0xabcdef1234567890...',
+  allowFutureTimestamps: false,
+  maxTimeDrift: 300 // 5 minutes
+});
+
+console.log('Timestamp verification:', timestampValid ? 'Valid' : 'Invalid');
+```
+
+### 3. Complete Verification
+Perform comprehensive verification of all aspects:
+
+```javascript
+const fullVerification = await verifier.verifyComplete({
+  verificationHash: '0xabcdef1234567890...',
+  options: {
+    verifyContent: true,
+    verifySignatures: true,
+    verifyWitness: true,
+    verifyChain: true,
+    verifyTimestamps: true
+  }
+});
+
+console.log('Complete verification:', fullVerification);
+```
+
+## Verification Methods
+
+### Scalar Verification
+Default method for performance:
+
+- **Simple hash validation** of revision objects
+- **Fast processing** for high-volume applications
+- **Suitable for** most verification scenarios
+- **Lower computational** requirements
+
+### Tree Verification
+Advanced method for selective disclosure:
+
+- **Merkle tree validation** of revision values
+- **Selective disclosure** capabilities
+- **Granular verification** options
+- **Higher computational** requirements
+
+## Verification Results
+
+### Success Response
+```json
+{
+  "isValid": true,
+  "verificationHash": "0xabcdef1234567890...",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "blockNumber": 12345678,
+  "network": "sepolia",
+  "signatures": [
+    {
+      "signer": "0x568a94a8f0f3dc0b245b853bef572075c1df5c50",
+      "valid": true,
+      "timestamp": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "witness": {
+    "transactionHash": "0xad007675d238746783d697ca8cbc0260f87275430d43ba08dea11d26a00e8850",
+    "blockNumber": 12345678,
+    "network": "sepolia"
+  }
+}
+```
+
+### Error Response
+```json
+{
+  "isValid": false,
+  "error": "Content hash mismatch",
+  "details": {
+    "expectedHash": "0x1234567890abcdef...",
+    "actualHash": "0xfedcba0987654321...",
+    "verificationHash": "0xabcdef1234567890..."
+  }
+}
+```
+
+## Verification Tools
+
+### Aqua Verifier Chrome Extension
+Browser-based verification tool:
+
+- **Name resolution** and AquaTree validation
+- **Real-time verification** of web content
+- **Visual indicators** for verification status
+- **Integration** with web applications
+
+### Command Line Tools
+CLI tools for batch verification:
+
+```bash
+# Verify a single revision
+aqua-verify --hash 0xabcdef1234567890... --content document.txt
+
+# Verify multiple revisions
+aqua-verify --batch revisions.json --output results.json
+
+# Verify with specific options
+aqua-verify --hash 0xabcdef1234567890... --witness --signatures --timestamps
+```
+
+### API Integration
+Programmatic verification through REST API:
+
+```javascript
+const response = await fetch('https://api.aqua-protocol.org/v3/verify', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${apiKey}`
+  },
+  body: JSON.stringify({
+    verificationHash: '0xabcdef1234567890...',
+    content: 'Document content',
+    options: {
+      verifyContent: true,
+      verifySignatures: true,
+      verifyWitness: true
+    }
+  })
+});
+
+const result = await response.json();
+```
+
+## Best Practices
+
+### Verification Strategy
+- **Verify early and often** to detect tampering quickly
+- **Use appropriate verification methods** based on requirements
+- **Implement caching** for frequently verified content
+- **Monitor verification results** for anomalies
+
+### Error Handling
+- **Handle verification failures** gracefully
+- **Provide clear error messages** to users
+- **Implement retry logic** for transient failures
+- **Log verification attempts** for audit purposes
+
+### Performance Optimization
+- **Batch verification** for multiple revisions
+- **Use appropriate verification methods** for your use case
+- **Implement caching** for verification results
+- **Monitor API rate limits** and usage
+
+## Troubleshooting
+
+### Common Issues
+- **Hash mismatches** due to content changes
+- **Signature verification failures** due to key issues
+- **Witness verification failures** due to network issues
+- **Timestamp validation failures** due to clock drift
+
+### Debugging
+- **Enable verbose logging** for detailed verification steps
+- **Check network connectivity** for witness verification
+- **Validate input parameters** before verification
+- **Review verification logs** for error patterns

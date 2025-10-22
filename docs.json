@@ -1,68 +1,108 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Aqua Protocol Docs",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#20B2AA",
+    "light": "#FDFCF8",
+    "dark": "#1A1A1A"
   },
+  "fonts": {
+    "family": "Poppins"
+  },
+  "css": "/custom.css",
   "favicon": "/favicon.svg",
   "navigation": {
-    "tabs": [
+        "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Getting Started",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Introduction",
             "pages": [
               "index",
-              "quickstart",
-              "development"
+              "intro",
+              "schema-reference",
+              "verifier-tests",
+              "quickstart"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Developer Tools",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "developer-tools/rest-api",
+              "developer-tools/cli-tool",
+              "developer-tools/sdk"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "Core Concepts",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Notarization & Verification",
             "pages": [
-              "api-reference/introduction"
+              "essentials/notarization",
+              "essentials/verification"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Identity & Access Control",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "essentials/identity-management",
+              "essentials/access-control"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Developer Tools",
+        "groups": [
+          {
+            "group": "SDK & Libraries",
+            "pages": [
+              "essentials/aqua-sdk",
+              "essentials/aqua-console"
+            ]
+          },
+          {
+            "group": "Examples & Tutorials",
+            "pages": [
+              "essentials/examples",
+              "essentials/tutorials"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Core API",
+            "pages": [
+              "api-reference/introduction",
+              "api-reference/endpoints"
+            ]
+          },
+          {
+            "group": "Schema & Validation",
+            "pages": [
+              "api-reference/schema",
+              "api-reference/verifier-tests"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Use Cases",
+        "groups": [
+          {
+            "group": "Applications",
+            "pages": [
+              "essentials/document-verification",
+              "essentials/supply-chain",
+              "essentials/identity-attestation"
             ]
           }
         ]
@@ -72,13 +112,18 @@
       "anchors": [
         {
           "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
+          "href": "https://aqua-protocol.org/docs",
           "icon": "book-open-cover"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "Community",
+          "href": "https://discord.gg/aqua-protocol",
+          "icon": "discord"
+        },
+        {
+          "anchor": "GitHub",
+          "href": "https://github.com/aqua-protocol",
+          "icon": "github"
         }
       ]
     }
@@ -88,16 +133,25 @@
     "dark": "/logo/dark.svg"
   },
   "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
+    "title": "Aqua Protocol Docs",
+    "search": {
+      "placeholder": "Search documentation...",
+      "suggestions": [
+        "notarization",
+        "verification", 
+        "signing",
+        "witnessing",
+        "API reference",
+        "SDK",
+        "CLI tool",
+        "schema",
+        "verifier tests"
+      ]
+    },
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "label": "Get Started",
+      "href": "https://aqua-protocol.org/docs/quickstart"
     }
   },
   "contextual": {
@@ -114,9 +168,10 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://x.com/aquaprotocol",
+      "github": "https://github.com/aqua-protocol",
+      "linkedin": "https://linkedin.com/company/aqua-protocol",
+      "discord": "https://discord.gg/aqua-protocol"
     }
   }
 }

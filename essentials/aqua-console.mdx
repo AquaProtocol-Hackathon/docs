@@ -1,0 +1,349 @@
+---
+title: "Aqua Console"
+description: "Web-based interface for testing and managing Aqua Protocol operations"
+icon: "terminal"
+---
+
+# Aqua Console
+
+The Aqua Console is a web-based interface that allows developers to test, manage, and interact with Aqua Protocol operations directly from their browser.
+
+## Overview
+
+The Aqua Console provides a comprehensive interface for:
+
+- **Testing notarization** and verification workflows
+- **Managing identities** and access control
+- **Monitoring operations** and verification status
+- **Debugging** and troubleshooting issues
+- **Exploring** Aqua Protocol features
+
+## Accessing the Console
+
+### Web Interface
+Visit the Aqua Console at [console.aqua-protocol.org](https://console.aqua-protocol.org)
+
+### Authentication
+1. **Sign up** for an Aqua Protocol account
+2. **Generate API keys** in your dashboard
+3. **Configure** your development environment
+4. **Start testing** with the console interface
+
+## Core Features
+
+### Notarization Testing
+Test document and content notarization:
+
+#### File Upload
+- **Drag and drop** files for notarization
+- **Support for multiple** file types (PDF, DOC, TXT, etc.)
+- **Automatic metadata** extraction
+- **Real-time progress** indicators
+
+#### Content Input
+- **Text editor** for content notarization
+- **JSON validation** for structured data
+- **Syntax highlighting** for code content
+- **Character count** and validation
+
+#### Notarization Options
+```javascript
+// Console automatically generates this configuration
+{
+  "hashingMethod": "scalar", // or "tree"
+  "metadata": {
+    "name": "document.pdf",
+    "type": "application/pdf",
+    "size": 1024000
+  },
+  "witnessNetwork": "sepolia", // or "mainnet"
+  "addSignature": true,
+  "addWitness": true
+}
+```
+
+### Verification Testing
+Test verification workflows:
+
+#### Hash Verification
+- **Input verification hash** for validation
+- **Content comparison** tools
+- **Signature verification** status
+- **Witness validation** results
+
+#### Batch Verification
+- **Upload verification list** (CSV/JSON)
+- **Bulk verification** processing
+- **Results export** and reporting
+- **Error handling** and retry logic
+
+### Identity Management
+Manage decentralized identities:
+
+#### Identity Creation
+- **Form-based** identity creation
+- **Field validation** and requirements
+- **Wallet integration** for signing
+- **Preview** before submission
+
+#### Attestation Management
+- **Create attestations** for identities
+- **Verify credential** claims
+- **Manage access** permissions
+- **Track attestation** history
+
+### Access Control
+Configure and test access policies:
+
+#### Policy Builder
+- **Visual policy** configuration
+- **Rule definition** interface
+- **Condition setting** tools
+- **Preview and test** policies
+
+#### Access Testing
+- **Simulate access** requests
+- **Test policy** enforcement
+- **Debug access** decisions
+- **Monitor access** logs
+
+## Console Interface
+
+### Dashboard
+Overview of your Aqua Protocol operations:
+
+- **Recent notarizations** and verifications
+- **Identity management** status
+- **Access control** metrics
+- **API usage** and limits
+
+### Notarization Workspace
+Dedicated space for notarization testing:
+
+- **File upload** area
+- **Content editor** with syntax highlighting
+- **Configuration** options
+- **Results** and verification status
+
+### Verification Workspace
+Tools for testing verification:
+
+- **Hash input** and validation
+- **Content comparison** tools
+- **Signature verification** interface
+- **Witness validation** results
+
+### Identity Workspace
+Identity and attestation management:
+
+- **Identity creation** forms
+- **Attestation** management
+- **Credential verification** tools
+- **Access control** configuration
+
+## API Integration
+
+### Console API
+The console provides its own API for programmatic access:
+
+```javascript
+// Console API client
+const consoleClient = new AquaConsoleClient({
+  apiKey: process.env.AQUA_CONSOLE_API_KEY,
+  endpoint: 'https://console.aqua-protocol.org/api'
+});
+
+// Test notarization
+const testResult = await consoleClient.testNotarization({
+  content: 'Test content',
+  options: {
+    hashingMethod: 'scalar',
+    addWitness: true
+  }
+});
+
+// Test verification
+const verificationResult = await consoleClient.testVerification({
+  verificationHash: testResult.verificationHash,
+  content: 'Test content'
+});
+```
+
+### Webhook Integration
+Set up webhooks for real-time notifications:
+
+```javascript
+// Configure webhook
+const webhook = await consoleClient.createWebhook({
+  url: 'https://your-app.com/webhooks/aqua',
+  events: ['notarization.created', 'verification.completed'],
+  secret: 'your-webhook-secret'
+});
+
+// Handle webhook events
+app.post('/webhooks/aqua', (req, res) => {
+  const { event, data } = req.body;
+  
+  switch (event) {
+    case 'notarization.created':
+      console.log('Notarization created:', data.verificationHash);
+      break;
+    case 'verification.completed':
+      console.log('Verification completed:', data.isValid);
+      break;
+  }
+  
+  res.status(200).send('OK');
+});
+```
+
+## Development Tools
+
+### Code Generation
+Generate code snippets for your implementation:
+
+#### JavaScript/TypeScript
+```javascript
+// Generated by Aqua Console
+import { AquaClient } from '@aqua-protocol/sdk';
+
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: 'https://api.aqua-protocol.org/v3'
+});
+
+const notarization = await client.notarize({
+  content: 'Your content here',
+  metadata: {
+    name: 'document.pdf',
+    type: 'application/pdf'
+  }
+});
+```
+
+#### Python
+```python
+# Generated by Aqua Console
+from aqua_protocol import AquaClient
+
+client = AquaClient(
+    api_key=os.getenv('AQUA_API_KEY'),
+    endpoint='https://api.aqua-protocol.org/v3'
+)
+
+notarization = client.notarize(
+    content='Your content here',
+    metadata={
+        'name': 'document.pdf',
+        'type': 'application/pdf'
+    }
+)
+```
+
+### Testing Templates
+Pre-built templates for common use cases:
+
+#### Document Notarization
+```javascript
+// Template for document notarization
+const documentNotarization = {
+  content: 'Document content',
+  metadata: {
+    name: 'contract.pdf',
+    type: 'application/pdf',
+    size: 1024000,
+    author: 'John Doe',
+    created: '2024-01-15T10:30:00Z'
+  },
+  options: {
+    hashingMethod: 'scalar',
+    addWitness: true,
+    addSignature: true
+  }
+};
+```
+
+#### Identity Attestation
+```javascript
+// Template for identity attestation
+const identityAttestation = {
+  subject: '0xidentity123...',
+  claim: {
+    type: 'credential',
+    value: 'Bachelor of Computer Science',
+    issuer: 'University of Technology',
+    issued: '2020-06-15T00:00:00Z'
+  },
+  attestation: {
+    type: 'educational_credential',
+    level: 'bachelor',
+    field: 'computer_science'
+  }
+};
+```
+
+## Monitoring and Analytics
+
+### Operation Metrics
+Track your Aqua Protocol usage:
+
+- **Notarization count** and success rate
+- **Verification requests** and response times
+- **API usage** and rate limits
+- **Error rates** and common issues
+
+### Performance Monitoring
+Monitor system performance:
+
+- **Response times** for operations
+- **Throughput** and capacity metrics
+- **Error tracking** and debugging
+- **Resource utilization** statistics
+
+### Audit Logs
+Comprehensive logging for compliance:
+
+- **Operation history** with timestamps
+- **User actions** and changes
+- **API calls** and responses
+- **Error logs** and debugging information
+
+## Best Practices
+
+### Console Usage
+- **Test thoroughly** before production deployment
+- **Use appropriate networks** (sepolia for testing)
+- **Monitor API usage** and rate limits
+- **Keep API keys** secure and rotated
+
+### Development Workflow
+- **Start with console** for initial testing
+- **Generate code snippets** for implementation
+- **Use webhooks** for real-time integration
+- **Monitor metrics** for optimization
+
+### Troubleshooting
+- **Check console logs** for error details
+- **Verify network connectivity** and API access
+- **Test with simple examples** first
+- **Use browser developer tools** for debugging
+
+## Support and Resources
+
+### Documentation
+- **API Reference** for detailed specifications
+- **Code Examples** for common use cases
+- **Tutorials** for step-by-step guides
+- **Best Practices** for optimal usage
+
+### Community
+- **Discord** for real-time support
+- **GitHub** for issue reporting and contributions
+- **Stack Overflow** for technical questions
+- **Community Forum** for discussions
+
+### Support Channels
+- **Email support** for technical issues
+- **Priority support** for enterprise customers
+- **Developer relations** for integration help
+- **Training sessions** for team onboarding

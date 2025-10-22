@@ -1,0 +1,510 @@
+---
+title: "Document Verification"
+description: "Use Aqua Protocol for secure document verification and authenticity"
+icon: "file-check"
+---
+
+# Document Verification
+
+Aqua Protocol provides robust document verification capabilities that ensure document authenticity, integrity, and tamper-proof verification across various industries and use cases.
+
+## Overview
+
+Document verification with Aqua Protocol enables:
+
+- **Tamper-proof verification** of document integrity
+- **Timestamp authentication** for document creation and modification
+- **Cryptographic proof** of document authenticity
+- **Decentralized verification** without centralized authorities
+- **Audit trails** for compliance and legal requirements
+
+## Use Cases
+
+### Legal Documents
+- **Contract verification** and authenticity
+- **Legal compliance** and regulatory requirements
+- **Evidence preservation** for legal proceedings
+- **Notary services** and document certification
+
+### Business Applications
+- **Invoice verification** and payment processing
+- **Purchase order** authentication
+- **Financial records** and audit trails
+- **Compliance** and regulatory reporting
+
+### Educational Credentials
+- **Diploma verification** and authenticity
+- **Transcript validation** and integrity
+- **Certificate verification** and expiration
+- **Academic records** and transcripts
+
+### Government Documents
+- **Identity document** verification
+- **License validation** and authenticity
+- **Permit verification** and status
+- **Official records** and certificates
+
+## Implementation Examples
+
+### Basic Document Verification
+```javascript
+import { AquaClient } from '@aqua-protocol/sdk';
+
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: 'https://api.aqua-protocol.org/v3'
+});
+
+// Notarize a document
+const document = 'This is an important legal contract...';
+const notarization = await client.notarize({
+  content: document,
+  metadata: {
+    title: 'Service Agreement',
+    type: 'legal_contract',
+    author: 'John Doe',
+    version: '1.0'
+  }
+});
+
+console.log('Document notarized:', notarization.verificationHash);
+```
+
+### Document Verification API
+```javascript
+// Verify document authenticity
+const verification = await client.verify({
+  verificationHash: notarization.verificationHash,
+  content: document
+});
+
+if (verification.isValid) {
+  console.log('Document is authentic and unmodified');
+  console.log('Notarized on:', verification.timestamp);
+  console.log('Block number:', verification.blockNumber);
+} else {
+  console.log('Document verification failed');
+}
+```
+
+### Batch Document Verification
+```javascript
+// Verify multiple documents
+const documents = [
+  { hash: '0xhash1...', content: 'Document 1 content' },
+  { hash: '0xhash2...', content: 'Document 2 content' },
+  { hash: '0xhash3...', content: 'Document 3 content' }
+];
+
+const batchVerification = await client.batchVerify(documents);
+
+console.log('Batch verification results:', batchVerification);
+```
+
+## Advanced Features
+
+### Selective Disclosure
+```javascript
+// Create document with selective disclosure
+const document = {
+  title: 'Confidential Report',
+  content: 'Sensitive information...',
+  metadata: {
+    author: 'Jane Smith',
+    department: 'Research',
+    classification: 'Confidential'
+  }
+};
+
+const notarization = await client.notarize({
+  content: JSON.stringify(document),
+  metadata: {
+    type: 'confidential_report',
+    classification: 'confidential'
+  },
+  options: {
+    hashingMethod: 'tree' // Enable selective disclosure
+  }
+});
+
+// Verify with selective disclosure
+const selectiveVerification = await client.verifySelective({
+  verificationHash: notarization.verificationHash,
+  disclosedFields: ['title', 'author'], // Only disclose title and author
+  verifier: '0xverifier123...'
+});
+```
+
+### Document Versioning
+```javascript
+// Create document version
+const documentVersion = {
+  documentId: 'DOC-001',
+  version: '2.0',
+  content: 'Updated document content...',
+  changes: 'Added new terms and conditions',
+  previousVersion: '0xprevious_hash...'
+};
+
+const versionNotarization = await client.notarize({
+  content: JSON.stringify(documentVersion),
+  metadata: {
+    type: 'document_version',
+    documentId: 'DOC-001',
+    version: '2.0'
+  }
+});
+
+// Verify document version chain
+const versionVerification = await client.verifyVersionChain({
+  verificationHash: versionNotarization.verificationHash,
+  documentId: 'DOC-001'
+});
+```
+
+### Document Signing
+```javascript
+// Add digital signature to document
+const signature = await client.addSignature({
+  verificationHash: notarization.verificationHash,
+  privateKey: process.env.PRIVATE_KEY,
+  signatureType: 'ethereum:eip-191'
+});
+
+console.log('Document signed:', signature.verificationHash);
+```
+
+## Industry-Specific Implementations
+
+### Legal Industry
+```javascript
+// Legal document verification system
+class LegalDocumentVerifier {
+  constructor(aquaClient) {
+    this.client = aquaClient;
+  }
+
+  async verifyContract(contractHash, expectedContent) {
+    const verification = await this.client.verify({
+      verificationHash: contractHash,
+      content: expectedContent
+    });
+
+    return {
+      isValid: verification.isValid,
+      timestamp: verification.timestamp,
+      blockNumber: verification.blockNumber,
+      legalStatus: verification.isValid ? 'AUTHENTIC' : 'TAMPERED'
+    };
+  }
+
+  async verifyEvidence(evidenceHash, evidenceContent) {
+    const verification = await this.client.verify({
+      verificationHash: evidenceHash,
+      content: evidenceContent
+    });
+
+    return {
+      isValid: verification.isValid,
+      chainOfCustody: verification.chainOfCustody,
+      admissibility: verification.isValid ? 'ADMISSIBLE' : 'INADMISSIBLE'
+    };
+  }
+}
+```
+
+### Financial Services
+```javascript
+// Financial document verification
+class FinancialDocumentVerifier {
+  constructor(aquaClient) {
+    this.client = aquaClient;
+  }
+
+  async verifyInvoice(invoiceHash, invoiceData) {
+    const verification = await this.client.verify({
+      verificationHash: invoiceHash,
+      content: JSON.stringify(invoiceData)
+    });
+
+    return {
+      isValid: verification.isValid,
+      amount: invoiceData.amount,
+      currency: invoiceData.currency,
+      dueDate: invoiceData.dueDate,
+      paymentStatus: verification.isValid ? 'VERIFIED' : 'UNVERIFIED'
+    };
+  }
+
+  async verifyTransaction(transactionHash, transactionData) {
+    const verification = await this.client.verify({
+      verificationHash: transactionHash,
+      content: JSON.stringify(transactionData)
+    });
+
+    return {
+      isValid: verification.isValid,
+      from: transactionData.from,
+      to: transactionData.to,
+      amount: transactionData.amount,
+      complianceStatus: verification.isValid ? 'COMPLIANT' : 'NON_COMPLIANT'
+    };
+  }
+}
+```
+
+### Healthcare
+```javascript
+// Healthcare document verification
+class HealthcareDocumentVerifier {
+  constructor(aquaClient) {
+    this.client = aquaClient;
+  }
+
+  async verifyMedicalRecord(recordHash, recordData) {
+    const verification = await this.client.verify({
+      verificationHash: recordHash,
+      content: JSON.stringify(recordData)
+    });
+
+    return {
+      isValid: verification.isValid,
+      patientId: recordData.patientId,
+      recordType: recordData.recordType,
+      confidentiality: recordData.confidentiality,
+      hipaaCompliance: verification.isValid ? 'COMPLIANT' : 'NON_COMPLIANT'
+    };
+  }
+
+  async verifyPrescription(prescriptionHash, prescriptionData) {
+    const verification = await this.client.verify({
+      verificationHash: prescriptionHash,
+      content: JSON.stringify(prescriptionData)
+    });
+
+    return {
+      isValid: verification.isValid,
+      patientId: prescriptionData.patientId,
+      medication: prescriptionData.medication,
+      dosage: prescriptionData.dosage,
+      validity: verification.isValid ? 'VALID' : 'INVALID'
+    };
+  }
+}
+```
+
+## Integration Patterns
+
+### REST API Integration
+```javascript
+// Express.js API for document verification
+const express = require('express');
+const { AquaClient } = require('@aqua-protocol/sdk');
+
+const app = express();
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: process.env.AQUA_ENDPOINT
+});
+
+// Verify document endpoint
+app.post('/api/verify', async (req, res) => {
+  try {
+    const { verificationHash, content } = req.body;
+    
+    const verification = await client.verify({
+      verificationHash,
+      content
+    });
+    
+    res.json({
+      isValid: verification.isValid,
+      timestamp: verification.timestamp,
+      blockNumber: verification.blockNumber,
+      network: verification.network
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+
+// Batch verification endpoint
+app.post('/api/verify/batch', async (req, res) => {
+  try {
+    const { documents } = req.body;
+    
+    const results = await client.batchVerify(documents);
+    
+    res.json({
+      results: results,
+      totalDocuments: documents.length,
+      validDocuments: results.filter(r => r.isValid).length
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+```
+
+### Database Integration
+```javascript
+// MongoDB integration for document verification
+const mongoose = require('mongoose');
+const { AquaClient } = require('@aqua-protocol/sdk');
+
+const DocumentSchema = new mongoose.Schema({
+  title: String,
+  content: String,
+  verificationHash: String,
+  metadata: Object,
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Document = mongoose.model('Document', DocumentSchema);
+
+class DocumentService {
+  constructor(aquaClient) {
+    this.client = aquaClient;
+  }
+
+  async createDocument(documentData) {
+    // Notarize document
+    const notarization = await this.client.notarize({
+      content: documentData.content,
+      metadata: documentData.metadata
+    });
+
+    // Store in database
+    const document = new Document({
+      title: documentData.title,
+      content: documentData.content,
+      verificationHash: notarization.verificationHash,
+      metadata: documentData.metadata
+    });
+
+    await document.save();
+    return document;
+  }
+
+  async verifyDocument(documentId) {
+    const document = await Document.findById(documentId);
+    if (!document) {
+      throw new Error('Document not found');
+    }
+
+    const verification = await this.client.verify({
+      verificationHash: document.verificationHash,
+      content: document.content
+    });
+
+    return {
+      document: document,
+      verification: verification
+    };
+  }
+}
+```
+
+## Best Practices
+
+### Security
+- **Validate inputs** before processing
+- **Use secure hashing** methods
+- **Implement access control** for sensitive documents
+- **Regular security audits** and updates
+
+### Performance
+- **Cache verification results** for frequently accessed documents
+- **Use batch operations** for multiple documents
+- **Implement rate limiting** for API endpoints
+- **Monitor performance** and optimize as needed
+
+### Compliance
+- **Maintain audit trails** for all operations
+- **Implement data retention** policies
+- **Ensure regulatory compliance** for your industry
+- **Regular compliance reviews** and updates
+
+### Error Handling
+- **Implement comprehensive** error handling
+- **Provide clear error messages** to users
+- **Log errors** for debugging and monitoring
+- **Implement retry logic** for transient failures
+
+## Monitoring and Analytics
+
+### Verification Metrics
+```javascript
+// Track verification metrics
+class VerificationMetrics {
+  constructor() {
+    this.metrics = {
+      totalVerifications: 0,
+      successfulVerifications: 0,
+      failedVerifications: 0,
+      averageVerificationTime: 0
+    };
+  }
+
+  async recordVerification(verificationResult, processingTime) {
+    this.metrics.totalVerifications++;
+    
+    if (verificationResult.isValid) {
+      this.metrics.successfulVerifications++;
+    } else {
+      this.metrics.failedVerifications++;
+    }
+    
+    // Update average processing time
+    this.metrics.averageVerificationTime = 
+      (this.metrics.averageVerificationTime + processingTime) / 2;
+  }
+
+  getMetrics() {
+    return {
+      ...this.metrics,
+      successRate: this.metrics.successfulVerifications / this.metrics.totalVerifications
+    };
+  }
+}
+```
+
+### Audit Logging
+```javascript
+// Audit logging for document verification
+class AuditLogger {
+  constructor() {
+    this.logs = [];
+  }
+
+  logVerification(verificationHash, result, user, timestamp) {
+    this.logs.push({
+      verificationHash,
+      result,
+      user,
+      timestamp,
+      action: 'VERIFICATION'
+    });
+  }
+
+  logDocumentCreation(documentHash, user, timestamp) {
+    this.logs.push({
+      documentHash,
+      user,
+      timestamp,
+      action: 'DOCUMENT_CREATION'
+    });
+  }
+
+  getAuditTrail(verificationHash) {
+    return this.logs.filter(log => 
+      log.verificationHash === verificationHash || 
+      log.documentHash === verificationHash
+    );
+  }
+}
+```

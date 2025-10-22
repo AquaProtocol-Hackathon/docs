@@ -1,0 +1,696 @@
+---
+title: "Identity Attestation"
+description: "Use Aqua Protocol for secure identity verification and credential attestation"
+icon: "id-card"
+---
+
+# Identity Attestation
+
+Aqua Protocol provides comprehensive identity attestation capabilities that enable secure, privacy-preserving verification of identities and credentials without relying on centralized authorities.
+
+## Overview
+
+Identity attestation with Aqua Protocol enables:
+
+- **Decentralized identity verification** without centralized authorities
+- **Privacy-preserving attestation** with selective disclosure
+- **Cryptographic proof** of identity and credential authenticity
+- **Cross-platform compatibility** and portability
+- **Audit trails** for compliance and verification
+
+## Use Cases
+
+### Digital Identity
+- **Government e-identity** and digital citizenship
+- **Healthcare patient** identity verification
+- **Financial services** KYC and compliance
+- **Education** student identity and credentials
+
+### Professional Credentials
+- **Professional certifications** and licenses
+- **Employment verification** and references
+- **Skills assessment** and portfolios
+- **Continuing education** credits and certificates
+
+### Access Control
+- **Building access** and security systems
+- **Digital services** and subscription management
+- **Content access** and permission management
+- **API access** and rate limiting
+
+### Compliance and Regulation
+- **Regulatory compliance** and reporting
+- **Audit trails** and verification
+- **Data protection** and privacy compliance
+- **Cross-border** identity verification
+
+## Implementation Examples
+
+### Basic Identity Attestation
+```javascript
+import { AquaClient } from '@aqua-protocol/sdk';
+
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: 'https://api.aqua-protocol.org/v3'
+});
+
+// Create identity attestation
+const createIdentityAttestation = async (identityData) => {
+  const attestation = {
+    subject: identityData.identityHash,
+    issuer: identityData.issuer,
+    claim: {
+      type: 'identity_verification',
+      name: identityData.name,
+      email: identityData.email,
+      dateOfBirth: identityData.dateOfBirth,
+      nationality: identityData.nationality
+    },
+    timestamp: new Date().toISOString()
+  };
+  
+  const notarization = await client.notarize({
+    content: JSON.stringify(attestation),
+    metadata: {
+      type: 'identity_attestation',
+      subject: identityData.identityHash,
+      issuer: identityData.issuer
+    }
+  });
+  
+  return notarization.verificationHash;
+};
+
+// Verify identity attestation
+const verifyIdentityAttestation = async (attestationHash, expectedData) => {
+  const verification = await client.verify({
+    verificationHash: attestationHash,
+    content: JSON.stringify(expectedData)
+  });
+  
+  return {
+    isValid: verification.isValid,
+    timestamp: verification.timestamp,
+    blockNumber: verification.blockNumber
+  };
+};
+```
+
+### Educational Credential Attestation
+```javascript
+// Educational credential attestation
+const createEducationalAttestation = async (credentialData) => {
+  const attestation = {
+    subject: credentialData.identityHash,
+    issuer: credentialData.institution,
+    claim: {
+      type: 'educational_credential',
+      degree: credentialData.degree,
+      field: credentialData.field,
+      institution: credentialData.institution,
+      graduationDate: credentialData.graduationDate,
+      gpa: credentialData.gpa
+    },
+    timestamp: new Date().toISOString()
+  };
+  
+  const notarization = await client.notarize({
+    content: JSON.stringify(attestation),
+    metadata: {
+      type: 'educational_attestation',
+      subject: credentialData.identityHash,
+      institution: credentialData.institution,
+      degree: credentialData.degree
+    }
+  });
+  
+  return notarization.verificationHash;
+};
+
+// Verify educational credential
+const verifyEducationalCredential = async (attestationHash, expectedData) => {
+  const verification = await client.verify({
+    verificationHash: attestationHash,
+    content: JSON.stringify(expectedData)
+  });
+  
+  return {
+    isValid: verification.isValid,
+    degree: expectedData.degree,
+    institution: expectedData.institution,
+    graduationDate: expectedData.graduationDate
+  };
+};
+```
+
+### Professional Certification Attestation
+```javascript
+// Professional certification attestation
+const createProfessionalAttestation = async (certificationData) => {
+  const attestation = {
+    subject: certificationData.identityHash,
+    issuer: certificationData.organization,
+    claim: {
+      type: 'professional_certification',
+      certification: certificationData.certification,
+      organization: certificationData.organization,
+      issuedDate: certificationData.issuedDate,
+      expiryDate: certificationData.expiryDate,
+      level: certificationData.level
+    },
+    timestamp: new Date().toISOString()
+  };
+  
+  const notarization = await client.notarize({
+    content: JSON.stringify(attestation),
+    metadata: {
+      type: 'professional_attestation',
+      subject: certificationData.identityHash,
+      organization: certificationData.organization,
+      certification: certificationData.certification
+    }
+  });
+  
+  return notarization.verificationHash;
+};
+
+// Verify professional certification
+const verifyProfessionalCertification = async (attestationHash, expectedData) => {
+  const verification = await client.verify({
+    verificationHash: attestationHash,
+    content: JSON.stringify(expectedData)
+  });
+  
+  return {
+    isValid: verification.isValid,
+    certification: expectedData.certification,
+    organization: expectedData.organization,
+    issuedDate: expectedData.issuedDate,
+    expiryDate: expectedData.expiryDate,
+    isExpired: new Date() > new Date(expectedData.expiryDate)
+  };
+};
+```
+
+## Advanced Features
+
+### Selective Disclosure
+```javascript
+// Selective disclosure for privacy
+const createSelectiveAttestation = async (attestationData) => {
+  const attestation = {
+    subject: attestationData.identityHash,
+    issuer: attestationData.issuer,
+    claim: {
+      type: 'selective_attestation',
+      name: attestationData.name,
+      email: attestationData.email,
+      dateOfBirth: attestationData.dateOfBirth,
+      ssn: attestationData.ssn,
+      address: attestationData.address
+    },
+    timestamp: new Date().toISOString()
+  };
+  
+  const notarization = await client.notarize({
+    content: JSON.stringify(attestation),
+    metadata: {
+      type: 'selective_attestation',
+      subject: attestationData.identityHash
+    },
+    options: {
+      hashingMethod: 'tree' // Enable selective disclosure
+    }
+  });
+  
+  return notarization.verificationHash;
+};
+
+// Verify with selective disclosure
+const verifySelectiveAttestation = async (attestationHash, disclosedFields) => {
+  const verification = await client.verifySelective({
+    verificationHash: attestationHash,
+    disclosedFields: disclosedFields,
+    verifier: '0xverifier123...'
+  });
+  
+  return verification;
+};
+```
+
+### Multi-Factor Attestation
+```javascript
+// Multi-factor attestation
+const createMultiFactorAttestation = async (attestationData) => {
+  const attestation = {
+    subject: attestationData.identityHash,
+    issuer: attestationData.issuer,
+    claim: {
+      type: 'multi_factor_attestation',
+      factors: [
+        {
+          type: 'government_id',
+          verified: true,
+          method: 'document_scan'
+        },
+        {
+          type: 'biometric',
+          verified: true,
+          method: 'fingerprint'
+        },
+        {
+          type: 'phone_verification',
+          verified: true,
+          method: 'sms'
+        }
+      ]
+    },
+    timestamp: new Date().toISOString()
+  };
+  
+  const notarization = await client.notarize({
+    content: JSON.stringify(attestation),
+    metadata: {
+      type: 'multi_factor_attestation',
+      subject: attestationData.identityHash,
+      factors: attestationData.factors.length
+    }
+  });
+  
+  return notarization.verificationHash;
+};
+```
+
+### Attestation Chains
+```javascript
+// Attestation chain verification
+const createAttestationChain = async (attestations) => {
+  const chain = [];
+  
+  for (let i = 0; i < attestations.length; i++) {
+    const attestation = attestations[i];
+    const previousHash = i > 0 ? chain[i - 1].verificationHash : null;
+    
+    const notarization = await client.notarize({
+      content: JSON.stringify(attestation),
+      metadata: {
+        type: 'attestation_chain',
+        subject: attestation.subject,
+        issuer: attestation.issuer,
+        chainIndex: i,
+        previousHash: previousHash
+      }
+    });
+    
+    chain.push({
+      ...attestation,
+      verificationHash: notarization.verificationHash,
+      previousHash: previousHash
+    });
+  }
+  
+  return chain;
+};
+
+// Verify attestation chain
+const verifyAttestationChain = async (chain) => {
+  const verificationResults = [];
+  
+  for (let i = 0; i < chain.length; i++) {
+    const attestation = chain[i];
+    const verification = await client.verify({
+      verificationHash: attestation.verificationHash,
+      content: JSON.stringify(attestation)
+    });
+    
+    verificationResults.push({
+      index: i,
+      verification,
+      isValid: verification.isValid
+    });
+  }
+  
+  return verificationResults;
+};
+```
+
+## Industry-Specific Implementations
+
+### Healthcare Identity Attestation
+```javascript
+// Healthcare identity attestation
+class HealthcareIdentityAttestation {
+  constructor(aquaClient) {
+    this.client = aquaClient;
+  }
+
+  async createPatientIdentity(patientData) {
+    const attestation = {
+      subject: patientData.identityHash,
+      issuer: patientData.healthcareProvider,
+      claim: {
+        type: 'patient_identity',
+        patientId: patientData.patientId,
+        name: patientData.name,
+        dateOfBirth: patientData.dateOfBirth,
+        medicalRecordNumber: patientData.medicalRecordNumber,
+        insuranceNumber: patientData.insuranceNumber
+      },
+      timestamp: new Date().toISOString()
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(attestation),
+      metadata: {
+        type: 'patient_identity',
+        subject: patientData.identityHash,
+        healthcareProvider: patientData.healthcareProvider
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+
+  async createMedicalLicense(licenseData) {
+    const attestation = {
+      subject: licenseData.identityHash,
+      issuer: licenseData.medicalBoard,
+      claim: {
+        type: 'medical_license',
+        licenseNumber: licenseData.licenseNumber,
+        specialty: licenseData.specialty,
+        issuedDate: licenseData.issuedDate,
+        expiryDate: licenseData.expiryDate,
+        status: licenseData.status
+      },
+      timestamp: new Date().toISOString()
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(attestation),
+      metadata: {
+        type: 'medical_license',
+        subject: licenseData.identityHash,
+        medicalBoard: licenseData.medicalBoard
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+}
+```
+
+### Financial Services Identity Attestation
+```javascript
+// Financial services identity attestation
+class FinancialIdentityAttestation {
+  constructor(aquaClient) {
+    this.client = aquaClient;
+  }
+
+  async createKYCAttestation(kycData) {
+    const attestation = {
+      subject: kycData.identityHash,
+      issuer: kycData.financialInstitution,
+      claim: {
+        type: 'kyc_verification',
+        name: kycData.name,
+        dateOfBirth: kycData.dateOfBirth,
+        address: kycData.address,
+        idType: kycData.idType,
+        idNumber: kycData.idNumber,
+        riskLevel: kycData.riskLevel
+      },
+      timestamp: new Date().toISOString()
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(attestation),
+      metadata: {
+        type: 'kyc_verification',
+        subject: kycData.identityHash,
+        financialInstitution: kycData.financialInstitution
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+
+  async createCreditScoreAttestation(creditData) {
+    const attestation = {
+      subject: creditData.identityHash,
+      issuer: creditData.creditBureau,
+      claim: {
+        type: 'credit_score',
+        score: creditData.score,
+        range: creditData.range,
+        factors: creditData.factors,
+        reportDate: creditData.reportDate
+      },
+      timestamp: new Date().toISOString()
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(attestation),
+      metadata: {
+        type: 'credit_score',
+        subject: creditData.identityHash,
+        creditBureau: creditData.creditBureau
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+}
+```
+
+### Education Identity Attestation
+```javascript
+// Education identity attestation
+class EducationIdentityAttestation {
+  constructor(aquaClient) {
+    this.client = aquaClient;
+  }
+
+  async createStudentIdentity(studentData) {
+    const attestation = {
+      subject: studentData.identityHash,
+      issuer: studentData.institution,
+      claim: {
+        type: 'student_identity',
+        studentId: studentData.studentId,
+        name: studentData.name,
+        program: studentData.program,
+        enrollmentDate: studentData.enrollmentDate,
+        status: studentData.status
+      },
+      timestamp: new Date().toISOString()
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(attestation),
+      metadata: {
+        type: 'student_identity',
+        subject: studentData.identityHash,
+        institution: studentData.institution
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+
+  async createTranscriptAttestation(transcriptData) {
+    const attestation = {
+      subject: transcriptData.identityHash,
+      issuer: transcriptData.institution,
+      claim: {
+        type: 'transcript',
+        studentId: transcriptData.studentId,
+        courses: transcriptData.courses,
+        gpa: transcriptData.gpa,
+        degree: transcriptData.degree,
+        graduationDate: transcriptData.graduationDate
+      },
+      timestamp: new Date().toISOString()
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(attestation),
+      metadata: {
+        type: 'transcript',
+        subject: transcriptData.identityHash,
+        institution: transcriptData.institution
+      }
+    });
+    
+    return notarization.verificationHash;
+  }
+}
+```
+
+## Integration Patterns
+
+### API Integration
+```javascript
+// Express.js API for identity attestation
+const express = require('express');
+const { AquaClient } = require('@aqua-protocol/sdk');
+
+const app = express();
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: process.env.AQUA_ENDPOINT
+});
+
+// Create attestation endpoint
+app.post('/api/attestations', async (req, res) => {
+  try {
+    const { subject, issuer, claim } = req.body;
+    
+    const attestation = {
+      subject,
+      issuer,
+      claim,
+      timestamp: new Date().toISOString()
+    };
+    
+    const notarization = await client.notarize({
+      content: JSON.stringify(attestation),
+      metadata: {
+        type: 'identity_attestation',
+        subject: subject,
+        issuer: issuer
+      }
+    });
+    
+    res.json({
+      success: true,
+      verificationHash: notarization.verificationHash
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+
+// Verify attestation endpoint
+app.post('/api/attestations/verify', async (req, res) => {
+  try {
+    const { verificationHash, expectedData } = req.body;
+    
+    const verification = await client.verify({
+      verificationHash,
+      content: JSON.stringify(expectedData)
+    });
+    
+    res.json({
+      isValid: verification.isValid,
+      timestamp: verification.timestamp
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+```
+
+### Database Integration
+```javascript
+// MongoDB integration for identity attestation
+const mongoose = require('mongoose');
+const { AquaClient } = require('@aqua-protocol/sdk');
+
+const AttestationSchema = new mongoose.Schema({
+  subject: String,
+  issuer: String,
+  claim: Object,
+  verificationHash: String,
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Attestation = mongoose.model('Attestation', AttestationSchema);
+
+class IdentityAttestationService {
+  constructor(aquaClient) {
+    this.client = aquaClient;
+  }
+
+  async createAttestation(attestationData) {
+    const attestation = {
+      subject: attestationData.subject,
+      issuer: attestationData.issuer,
+      claim: attestationData.claim,
+      timestamp: new Date().toISOString()
+    };
+    
+    const notarization = await this.client.notarize({
+      content: JSON.stringify(attestation),
+      metadata: {
+        type: 'identity_attestation',
+        subject: attestationData.subject,
+        issuer: attestationData.issuer
+      }
+    });
+    
+    const dbAttestation = new Attestation({
+      subject: attestationData.subject,
+      issuer: attestationData.issuer,
+      claim: attestationData.claim,
+      verificationHash: notarization.verificationHash
+    });
+    
+    await dbAttestation.save();
+    return dbAttestation;
+  }
+
+  async verifyAttestation(verificationHash) {
+    const attestation = await Attestation.findOne({ verificationHash });
+    if (!attestation) {
+      throw new Error('Attestation not found');
+    }
+    
+    const verification = await this.client.verify({
+      verificationHash: attestation.verificationHash,
+      content: JSON.stringify({
+        subject: attestation.subject,
+        issuer: attestation.issuer,
+        claim: attestation.claim
+      })
+    });
+    
+    return {
+      attestation,
+      verification
+    };
+  }
+}
+```
+
+## Best Practices
+
+### Privacy and Security
+- **Implement selective disclosure** for sensitive information
+- **Use encryption** for sensitive data
+- **Implement access control** for attestation data
+- **Regular security audits** and updates
+
+### Performance
+- **Cache verification results** for frequently accessed attestations
+- **Use batch operations** for multiple attestations
+- **Implement rate limiting** for API endpoints
+- **Monitor performance** and optimize as needed
+
+### Compliance
+- **Maintain audit trails** for all operations
+- **Implement data retention** policies
+- **Ensure regulatory compliance** for your industry
+- **Regular compliance reviews** and updates
+
+### User Experience
+- **Simplify attestation** creation process
+- **Provide clear verification** status
+- **Enable easy sharing** of attestations
+- **Support multiple** verification methods

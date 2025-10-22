@@ -1,0 +1,401 @@
+---
+title: "Aqua SDK"
+description: "Complete guide to the Aqua Protocol SDK for developers"
+icon: "code"
+---
+
+# Aqua SDK
+
+The Aqua Protocol SDK provides developers with comprehensive tools and libraries to integrate notarization, verification, and identity management into their applications.
+
+## Installation
+
+### Node.js
+```bash
+npm install @aqua-protocol/sdk
+# or
+yarn add @aqua-protocol/sdk
+# or
+pnpm add @aqua-protocol/sdk
+```
+
+### Python
+```bash
+pip install aqua-protocol-sdk
+```
+
+### Go
+```bash
+go get github.com/aqua-protocol/sdk-go
+```
+
+## Quick Start
+
+### Initialize the SDK
+```javascript
+import { AquaClient } from '@aqua-protocol/sdk';
+
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: 'https://api.aqua-protocol.org/v3',
+  network: 'sepolia' // or 'mainnet'
+});
+```
+
+### Basic Notarization
+```javascript
+// Notarize content
+const notarization = await client.notarize({
+  content: 'Important document content',
+  metadata: {
+    title: 'Contract Agreement',
+    type: 'legal_document'
+  }
+});
+
+console.log('Notarized:', notarization.verificationHash);
+```
+
+### Verify Content
+```javascript
+// Verify notarized content
+const verification = await client.verify({
+  verificationHash: notarization.verificationHash,
+  content: 'Important document content'
+});
+
+console.log('Verification result:', verification.isValid);
+```
+
+## Core Features
+
+### Notarization
+Create immutable records of data:
+
+```javascript
+// File notarization
+const fileNotarization = await client.notarizeFile({
+  filePath: './document.pdf',
+  metadata: {
+    name: 'Contract.pdf',
+    type: 'application/pdf'
+  }
+});
+
+// Content notarization
+const contentNotarization = await client.notarizeContent({
+  content: JSON.stringify(data),
+  contentType: 'application/json'
+});
+
+// Form notarization (for layer 2 apps)
+const formNotarization = await client.notarizeForm({
+  formData: {
+    name: 'John Doe',
+    email: 'john@example.com',
+    walletAddress: '0x1234567890abcdef'
+  },
+  formType: 'identity_claim'
+});
+```
+
+### Verification
+Validate notarized content:
+
+```javascript
+// Content verification
+const contentVerification = await client.verifyContent({
+  verificationHash: '0xabcdef1234567890...',
+  content: 'Document content'
+});
+
+// Signature verification
+const signatureVerification = await client.verifySignature({
+  verificationHash: '0xabcdef1234567890...',
+  signature: '0x799cd8177dc2c5dc34d389601175d550466a73509b71d533aaa3ff0ee958b3b3...',
+  publicKey: '0x0380a77a1a6d59be5c10d7ee5e10def79283938bb8a60025d0fe5404e650e8ccc1'
+});
+
+// Complete verification
+const completeVerification = await client.verifyComplete({
+  verificationHash: '0xabcdef1234567890...',
+  options: {
+    verifyContent: true,
+    verifySignatures: true,
+    verifyWitness: true
+  }
+});
+```
+
+### Identity Management
+Manage decentralized identities:
+
+```javascript
+// Create identity
+const identity = await client.createIdentity({
+  name: 'John Doe',
+  email: 'john@example.com',
+  walletAddress: '0x1234567890abcdef'
+});
+
+// Verify identity
+const identityVerification = await client.verifyIdentity({
+  identityHash: identity.verificationHash,
+  publicKey: identity.publicKey
+});
+
+// Create attestation
+const attestation = await client.createAttestation({
+  subject: identity.verificationHash,
+  claim: {
+    type: 'credential',
+    value: 'Bachelor of Computer Science'
+  },
+  issuer: '0xuniversity123...'
+});
+```
+
+### Access Control
+Implement decentralized access control:
+
+```javascript
+// Create access policy
+const policy = await client.createAccessPolicy({
+  resource: '0xresource123...',
+  rules: [
+    {
+      subject: '0xuser123...',
+      permissions: ['read', 'write'],
+      conditions: {
+        validUntil: '2024-12-31T23:59:59Z'
+      }
+    }
+  ]
+});
+
+// Check access
+const hasAccess = await client.checkAccess({
+  subject: '0xuser123...',
+  resource: '0xresource123...',
+  action: 'read'
+});
+```
+
+## Advanced Features
+
+### Batch Operations
+Process multiple operations efficiently:
+
+```javascript
+// Batch notarization
+const batchNotarizations = await client.batchNotarize([
+  { content: 'Document 1', metadata: { name: 'doc1.pdf' } },
+  { content: 'Document 2', metadata: { name: 'doc2.pdf' } },
+  { content: 'Document 3', metadata: { name: 'doc3.pdf' } }
+]);
+
+// Batch verification
+const batchVerifications = await client.batchVerify([
+  { verificationHash: '0xhash1...', content: 'content1' },
+  { verificationHash: '0xhash2...', content: 'content2' },
+  { verificationHash: '0xhash3...', content: 'content3' }
+]);
+```
+
+### Event Handling
+Listen to SDK events:
+
+```javascript
+// Listen to notarization events
+client.on('notarization:created', (event) => {
+  console.log('Notarization created:', event.verificationHash);
+});
+
+// Listen to verification events
+client.on('verification:completed', (event) => {
+  console.log('Verification completed:', event.isValid);
+});
+
+// Listen to error events
+client.on('error', (error) => {
+  console.error('SDK Error:', error.message);
+});
+```
+
+### Custom Hashing
+Use custom hashing methods:
+
+```javascript
+// Scalar hashing (default)
+const scalarResult = await client.notarize({
+  content: 'Document content',
+  hashingMethod: 'scalar'
+});
+
+// Tree hashing (for selective disclosure)
+const treeResult = await client.notarize({
+  content: 'Document content',
+  hashingMethod: 'tree'
+});
+```
+
+## Configuration
+
+### Environment Variables
+```bash
+# Required
+AQUA_API_KEY=your_api_key_here
+AQUA_NETWORK=sepolia
+
+# Optional
+AQUA_ENDPOINT=https://api.aqua-protocol.org/v3
+AQUA_TIMEOUT=30000
+AQUA_RETRY_ATTEMPTS=3
+```
+
+### SDK Configuration
+```javascript
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  endpoint: process.env.AQUA_ENDPOINT,
+  network: process.env.AQUA_NETWORK,
+  timeout: 30000,
+  retryAttempts: 3,
+  logging: {
+    level: 'info',
+    enableConsole: true
+  }
+});
+```
+
+## Error Handling
+
+### Common Errors
+```javascript
+try {
+  const result = await client.notarize({ content: 'test' });
+} catch (error) {
+  switch (error.code) {
+    case 'INVALID_API_KEY':
+      console.error('Invalid API key');
+      break;
+    case 'NETWORK_ERROR':
+      console.error('Network connection failed');
+      break;
+    case 'VALIDATION_ERROR':
+      console.error('Input validation failed:', error.details);
+      break;
+    case 'RATE_LIMIT_EXCEEDED':
+      console.error('Rate limit exceeded, retry later');
+      break;
+    default:
+      console.error('Unknown error:', error.message);
+  }
+}
+```
+
+### Retry Logic
+```javascript
+const client = new AquaClient({
+  apiKey: process.env.AQUA_API_KEY,
+  retryAttempts: 3,
+  retryDelay: 1000, // 1 second
+  retryCondition: (error) => {
+    return error.code === 'NETWORK_ERROR' || 
+           error.code === 'RATE_LIMIT_EXCEEDED';
+  }
+});
+```
+
+## Testing
+
+### Unit Tests
+```javascript
+import { AquaClient } from '@aqua-protocol/sdk';
+
+describe('AquaClient', () => {
+  let client;
+
+  beforeEach(() => {
+    client = new AquaClient({
+      apiKey: 'test-key',
+      endpoint: 'https://api.test.aqua-protocol.org/v3'
+    });
+  });
+
+  test('should notarize content', async () => {
+    const result = await client.notarize({
+      content: 'test content'
+    });
+    
+    expect(result.verificationHash).toBeDefined();
+    expect(result.isValid).toBe(true);
+  });
+
+  test('should verify content', async () => {
+    const notarization = await client.notarize({
+      content: 'test content'
+    });
+    
+    const verification = await client.verify({
+      verificationHash: notarization.verificationHash,
+      content: 'test content'
+    });
+    
+    expect(verification.isValid).toBe(true);
+  });
+});
+```
+
+### Integration Tests
+```javascript
+describe('Aqua Protocol Integration', () => {
+  test('should handle complete notarization workflow', async () => {
+    // 1. Notarize content
+    const notarization = await client.notarize({
+      content: 'Important document'
+    });
+    
+    // 2. Add signature
+    const signature = await client.addSignature({
+      verificationHash: notarization.verificationHash,
+      privateKey: process.env.TEST_PRIVATE_KEY
+    });
+    
+    // 3. Add witness
+    const witness = await client.addWitness({
+      verificationHash: signature.verificationHash,
+      witnessNetwork: 'sepolia'
+    });
+    
+    // 4. Verify complete chain
+    const verification = await client.verifyComplete({
+      verificationHash: witness.verificationHash
+    });
+    
+    expect(verification.isValid).toBe(true);
+    expect(verification.signatures).toHaveLength(1);
+    expect(verification.witness).toBeDefined();
+  });
+});
+```
+
+## Best Practices
+
+### Security
+- **Never expose API keys** in client-side code
+- **Use environment variables** for configuration
+- **Validate all inputs** before sending to API
+- **Implement proper error handling** for all operations
+
+### Performance
+- **Use batch operations** for multiple items
+- **Implement caching** for frequently accessed data
+- **Monitor API usage** and rate limits
+- **Use appropriate networks** based on requirements
+
+### Development
+- **Use TypeScript** for better type safety
+- **Write comprehensive tests** for all functionality
+- **Implement logging** for debugging and monitoring
+- **Follow semantic versioning** for SDK updates
