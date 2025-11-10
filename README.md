@@ -325,7 +325,7 @@ const verification = await aqua.verify({
 <Warning>
   Critical warnings or cautions
 </Warning>
-```
+
 
 ### Documentation Components
 
