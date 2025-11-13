@@ -550,7 +550,7 @@ This documentation is licensed under the **MIT License**. See the [LICENSE](LICE
 
 **Documentation crafted with 💙 by the Wild Flower Team**
 
-[🔗 Visit Live Documentation](https://docs.aquaprotocol.com)
+[🔗 Visit Live Documentation](https://aquaprotocol.mintlify.app/)
 
 [⬆ Back to Top](#aqua-protocol-documentation)
 
